@@ -16,7 +16,7 @@
 L=1;
 dom = [0 L];
 %...and specify a sampling of the time domain:
-T = 10;
+T = 1;
 t = 0:T/100:T;
 
 %% Parameters
@@ -34,8 +34,8 @@ lambdak = -10;
 
 %% Make the right-hand side of the PDE.
 pdefun = @(t,x,u,v) [ ...
-                    -diff(V.*u - D.*diff(u)) - betak.*lambdak.*(v-u); ...
-                    betak.*lambdak.*(v-u) ...
+                    (-diff(V.*u - D.*diff(u)) - betak.*lambdak.*(v-u))/beta; ...
+                    lambdak.*(v-u) ...
                     ];
 pdeflag = [1  1]; % Zero when a variable is indep of time.
 
