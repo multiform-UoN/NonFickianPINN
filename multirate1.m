@@ -30,6 +30,8 @@ V = 1;
 K = 10;
 betak = 0.1;
 lambdak = -10;
+% Oscillating frequency
+omega = 0;
 
 
 %% Make the right-hand side of the PDE.
@@ -40,7 +42,7 @@ pdefun = @(t,x,u,v) [ ...
 pdeflag = [1  1]; % Zero when a variable is indep of time.
 
 %% Assign boundary conditions.
-bc.left = @(t,u,v) [u-1];
+bc.left = @(t,u,v) [u-abs(cos(omega*2*pi*t))];
 bc.right = @(t,u,v) [diff(u)];
 
 %% Construct a chebfun of the space variable on the domain,
@@ -64,7 +66,7 @@ legend
 hold on
 figure
 % waterfall(u, t)
-plot(u(:,1:10),'k')
+plot(u(:),'k')
 xlabel('x'), ylabel('t'), title('u,v')
 hold on
 % figure
