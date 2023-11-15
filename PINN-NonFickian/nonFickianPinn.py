@@ -25,11 +25,11 @@ c_train = c_data.astype(np.float32)
 c1_train = c1_data.astype(np.float32)
 
 # additional variables added to gradient tracking
-beta0 = tf.Variable([0.4], trainable=True)
-beta1 = tf.Variable([0.3], trainable=True)
-lambda1 = tf.Variable([-10.5], trainable=True)
-u = tf.Variable([1.2], trainable=True)
-d = tf.Variable([0.2], trainable=True)
+beta0 = tf.Variable([0.3], trainable=False)
+beta1 = tf.Variable([0.1], trainable=False)
+lambda1 = tf.Variable([-10.0], trainable=False)
+u = tf.Variable([1.0], trainable=False)
+d = tf.Variable([0.1], trainable=False)
 
 
 ### Original ###
@@ -112,7 +112,7 @@ def custom_loss(inputs, model):
     data_c_fitting_loss = tf.reduce_mean((c_model - c_data) ** 2)
     data_c1_fitting_loss = tf.reduce_mean((c1_model - c1_data) ** 2)
     data_fitting_loss = data_c_fitting_loss + data_c1_fitting_loss
-    loss = pde_loss + 5*data_fitting_loss
+    loss = pde_loss + 100000*data_fitting_loss
 
     del tape
 
@@ -134,9 +134,9 @@ epochs = 100  # 1000
 #               loss=lambda y_true, y_pred: custom_loss([x_train, t_train, theta_train], model)[1])
 
 # Create the optimizer with a smaller learning rate
-# learning_rate = 1e-2 # 1e-4
+learning_rate = 1e-4
 # learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([10, 100], [1e-1, 5e-2, 1e-2])  #OK
-learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([100, 300], [1e-2, 1e-3, 5e-4])
+# learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([100, 300], [1e-2, 1e-3, 5e-4])
 optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate)
 
 # Training loop
@@ -183,11 +183,11 @@ for epoch in range(epochs):
         d_values.append(d.numpy())
 
         current_lr = optimizer._decayed_lr(tf.float32).numpy()
-        beta0.assign_sub(gradients[-5] * current_lr)
-        beta1.assign_sub(gradients[-4] * current_lr)
-        lambda1.assign_sub(gradients[-3] * current_lr)
-        u.assign_sub(gradients[-2] * current_lr)
-        d.assign_sub(gradients[-1] * current_lr)
+        # beta0.assign_sub(gradients[-5] * current_lr)
+        # beta1.assign_sub(gradients[-4] * current_lr)
+        # lambda1.assign_sub(gradients[-3] * current_lr)
+        # u.assign_sub(gradients[-2] * current_lr)
+        # d.assign_sub(gradients[-1] * current_lr)
 
         if epoch % 1 == 0:
             print(f"Epoch {epoch + 1}/{epochs}, Loss: {loss.numpy()}")
@@ -223,9 +223,17 @@ c1_data_ = tf.reshape(c1_data, [x_data.shape[0], t_data.shape[0]])
 # Plot solutions
 for i in range(sol_c.shape[1]):
     plt.plot(x_data, sol_c[:, i])#, label='c')
-    # plt.plot(x_data, sol_c1[:, i])#, label='c1')
     plt.plot(x_data, c_data_[i, :])#, label='c_data')
-    # plt.plot(x_data, c1_data_[i, :])#, label='c1_data')
+plt.xlabel('x')
+plt.ylabel('fun')
+plt.title('Comparison')
+plt.legend()
+plt.grid()
+plt.show()
+
+for i in range(sol_c.shape[1]):
+    plt.plot(x_data, sol_c1[:, i])#, label='c1')
+    plt.plot(x_data, c1_data_[i, :])#, label='c1_data')
 plt.xlabel('x')
 plt.ylabel('fun')
 plt.title('Comparison')
