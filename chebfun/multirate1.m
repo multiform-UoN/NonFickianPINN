@@ -19,20 +19,23 @@ dom = [0 L];
 T = 1;
 t = 0:T/100:T;
 
-%% Parameters
-% Porosity
-beta = 0.3;
-% Dispersion
-D = .1;
-% Velocity
-V = 1;
-% Rates
 K = 10;
+
+%% Testcase 1
+datafolder = "../data/testcase1/";
+beta = 0.3;
+D = .1;
+V = 1;
 betak = 0.1;
 lambdak = -10;
-% Oscillating frequency
+
 omega = 0;
 
+
+%% Write parameters to file
+parameters = [beta; D; V; betak; lambdak];
+filename = fullfile(datafolder, 'p.csv');
+dlmwrite(filename, parameters, 'delimiter', ',', 'precision', '%.6f');
 
 %% Make the right-hand side of the PDE.
 pdefun = @(t,x,u,v) [ ...

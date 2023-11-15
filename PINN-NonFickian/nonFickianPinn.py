@@ -1,3 +1,5 @@
+#%%
+# import
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -8,30 +10,43 @@ from keras.regularizers import l1_l2
 from time import time
 import matplotlib.pyplot as plt
 
-# Load the training data from sol_train.csv
-x_data = pd.read_csv('x_data.csv', header=None)
-t_data = pd.read_csv('t_data.csv', header=None)
-c_data = pd.read_csv('c_data.csv', header=None)
-c1_data = pd.read_csv('c1_data.csv', header=None)
+#%%
+# Testcase (choose the one you want to run)
+datafolder = "../data/testcase1"
+data_weight = 1000
+ic_weight = 10000
+learning_rate = 1e-4
+
+
+# Load data
+p = pd.read_csv(f'{datafolder}/p.csv', header=None)
+x_data = pd.read_csv(f'{datafolder}/x.csv', header=None)
+t_data = pd.read_csv(f'{datafolder}/t.csv', header=None)
+c_data = pd.read_csv(f'{datafolder}/c.csv', header=None)
+c1_data = pd.read_csv(f'{datafolder}/c1.csv', header=None)
+
+nt = np.shape(t_data)[0]
+nx = np.shape(x_data)[0]
 
 X_data, T_data = np.meshgrid(x_data, t_data)
 Xgrid = np.vstack([X_data.flatten(), T_data.flatten()]).T
 Xgrid_data = Xgrid[:, 0]
 Tgrid_data = Xgrid[:, 1]
 
+p = np.array(p).squeeze().astype(np.float32)
 x_train = Xgrid_data.astype(np.float32)
 t_train = Tgrid_data.astype(np.float32)
 c_train = c_data.astype(np.float32)
 c1_train = c1_data.astype(np.float32)
 
 # additional variables added to gradient tracking
-beta0 = tf.Variable([0.3], trainable=False)
-beta1 = tf.Variable([0.1], trainable=False)
-lambda1 = tf.Variable([-10.0], trainable=False)
-u = tf.Variable([1.0], trainable=False)
-d = tf.Variable([0.1], trainable=False)
+beta0 = tf.Variable([p[0]], trainable=False)
+d = tf.Variable([p[1]], trainable=False)
+u = tf.Variable([p[2]], trainable=False)
+beta1 = tf.Variable([p[3]], trainable=False)
+lambda1 = tf.Variable([p[4]], trainable=False)
 
-
+#%%
 ### Original ###
 # def PINNModel():
 #     x_input = keras.Input(shape=(1,))
@@ -112,11 +127,12 @@ def custom_loss(inputs, model):
     data_c_fitting_loss = tf.reduce_mean((c_model - c_data) ** 2)
     data_c1_fitting_loss = tf.reduce_mean((c1_model - c1_data) ** 2)
     data_fitting_loss = data_c_fitting_loss + data_c1_fitting_loss
-    loss = pde_loss + 100000*data_fitting_loss
+    ic_c1_fitting_loss = tf.reduce_mean(c1_model[0:nt] ** 2)
+    loss = pde_loss + data_weight*data_fitting_loss + ic_weight*ic_c1_fitting_loss
 
     del tape
 
-    return loss, pde_loss, data_fitting_loss
+    return loss, pde_loss, data_fitting_loss, ic_c1_fitting_loss
 
 
 # Create the PINN model
@@ -134,7 +150,6 @@ epochs = 100  # 1000
 #               loss=lambda y_true, y_pred: custom_loss([x_train, t_train, theta_train], model)[1])
 
 # Create the optimizer with a smaller learning rate
-learning_rate = 1e-4
 # learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([10, 100], [1e-1, 5e-2, 1e-2])  #OK
 # learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([100, 300], [1e-2, 1e-3, 5e-4])
 optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate)
@@ -143,6 +158,7 @@ optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate)
 losses = []
 pde_losses = []
 data_fitting_losses = []
+ic_c1_fitting_losses = []
 beta0_values = []
 beta1_values = []
 lambda1_values = []
@@ -166,7 +182,7 @@ for epoch in range(epochs):
         print("# STARTING EPOCH", epoch + 1)
 
         with tf.GradientTape() as tape:
-            loss, pde_loss, data_fitting_loss = custom_loss(inputs, model)
+            loss, pde_loss, data_fitting_loss, ic_c1_fitting_loss = custom_loss(inputs, model)
 
         print("Computing gradients")
         gradients = tape.gradient(loss, trainable)
@@ -176,6 +192,7 @@ for epoch in range(epochs):
         losses.append(loss.numpy())
         pde_losses.append(pde_loss.numpy())
         data_fitting_losses.append(data_fitting_loss.numpy())
+        ic_c1_fitting_losses.append(ic_c1_fitting_loss.numpy())
         beta0_values.append(beta0.numpy())
         beta1_values.append(beta1.numpy())
         lambda1_values.append(lambda1.numpy())
@@ -204,6 +221,7 @@ print('\nComputation time: {} seconds'.format(time() - t0))
 plt.plot(losses, label='Total Loss')
 plt.plot(pde_losses, label='PDE Loss')
 plt.plot(data_fitting_losses, label='Data Fitting Loss')
+plt.plot(ic_c1_fitting_losses, label='IC c1 Fitting Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Loss Contributions')
@@ -221,7 +239,7 @@ sol_c1 = tf.reshape(sol_c1, [x_data.shape[0], t_data.shape[0]])
 c_data_ = tf.reshape(c_data, [x_data.shape[0], t_data.shape[0]])
 c1_data_ = tf.reshape(c1_data, [x_data.shape[0], t_data.shape[0]])
 # Plot solutions
-for i in range(sol_c.shape[1]):
+for i in range(3):#sol_c.shape[1]):
     plt.plot(x_data, sol_c[:, i])#, label='c')
     plt.plot(x_data, c_data_[i, :])#, label='c_data')
 plt.xlabel('x')
@@ -231,7 +249,7 @@ plt.legend()
 plt.grid()
 plt.show()
 
-for i in range(sol_c.shape[1]):
+for i in range(3):#sol_c.shape[1]):
     plt.plot(x_data, sol_c1[:, i])#, label='c1')
     plt.plot(x_data, c1_data_[i, :])#, label='c1_data')
 plt.xlabel('x')
@@ -240,3 +258,5 @@ plt.title('Comparison')
 plt.legend()
 plt.grid()
 plt.show()
+
+# %%
