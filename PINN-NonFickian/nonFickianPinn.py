@@ -9,14 +9,20 @@ from keras.constraints import NonNeg
 from keras.regularizers import l1_l2
 from time import time
 import matplotlib.pyplot as plt
+import os
 
 #%%
 # Testcase (choose the one you want to run)
-datafolder = "../data/testcase1"
+testcase = "testcase0"
 data_weight = 1000
-ic_weight = 10000
-learning_rate = 1e-4
+ic_weight = 0.0
+learning_rate = 1e-3
 
+# Check if the folder exists
+datafolder = "../data/"+testcase
+if not os.path.exists(datafolder):
+    # If it doesn't exist, use the folder name without the "../"
+    datafolder = "data/"+testcase
 
 # Load data
 p = pd.read_csv(f'{datafolder}/p.csv', header=None)
@@ -107,7 +113,7 @@ def custom_loss(inputs, model):
     tt = tf.Variable(t)
     xx = tf.Variable(x)
     with tf.GradientTape(persistent=True) as tape:
-        output_model = model([xx, tt])
+        output_model = model([tt, xx])
         c_model = output_model[:, 0]
         c_model = tf.expand_dims(c_model, -1)
         c1_model = output_model[:, 1]
@@ -115,9 +121,9 @@ def custom_loss(inputs, model):
         tape.watch(tt)
         tape.watch(xx)
         c_x = tape.gradient(c_model, xx)
-    c_t = tape.gradient(c_model, tt)
-    c1_t = tape.gradient(c1_model, tt)
-    div_output = u * c_x - d * tape.gradient(c_x, xx)
+        c_t = tape.gradient(c_model, tt)
+        c1_t = tape.gradient(c1_model, tt)
+        div_output = u * c_x - d * tape.gradient(c_x, xx)
 
     # Compute the components of loss function
     pde_loss_c = tf.reduce_mean(
@@ -138,11 +144,11 @@ def custom_loss(inputs, model):
 # Create the PINN model
 model = pinn_model()
 trainable = model.trainable_variables
-trainable.append(beta0)
-trainable.append(beta1)
-trainable.append(lambda1)
-trainable.append(u)
-trainable.append(d)
+# trainable.append(beta0)
+# trainable.append(beta1)
+# trainable.append(lambda1)
+# trainable.append(u)
+# trainable.append(d)
 
 epochs = 100  # 1000
 # # Compile the model
@@ -230,18 +236,20 @@ plt.grid()
 plt.show()
 
 
+#%%
+# Plot the solutions
 solutions = model([x_train, t_train])
 sol_c = solutions[:, 0]
 sol_c1 = solutions[:, 1]
 
-sol_c = tf.reshape(sol_c, [x_data.shape[0], t_data.shape[0]])
-sol_c1 = tf.reshape(sol_c1, [x_data.shape[0], t_data.shape[0]])
-c_data_ = tf.reshape(c_data, [x_data.shape[0], t_data.shape[0]])
-c1_data_ = tf.reshape(c1_data, [x_data.shape[0], t_data.shape[0]])
+sol_c_ = tf.reshape(sol_c, [t_data.shape[0], x_data.shape[0]])
+sol_c1_ = tf.reshape(sol_c1, [t_data.shape[0], x_data.shape[0]])
+c_data_ = tf.reshape(c_data, [t_data.shape[0], x_data.shape[0]])
+c1_data_ = tf.reshape(c1_data, [t_data.shape[0], x_data.shape[0]])
 # Plot solutions
 for i in range(3):#sol_c.shape[1]):
-    plt.plot(x_data, sol_c[:, i])#, label='c')
-    plt.plot(x_data, c_data_[i, :])#, label='c_data')
+    plt.plot(x_data, sol_c_[i, :],'k')#, label='c')
+    plt.plot(x_data, c_data_[i, :],'*r')#, label='c_data')
 plt.xlabel('x')
 plt.ylabel('fun')
 plt.title('Comparison')
@@ -250,8 +258,8 @@ plt.grid()
 plt.show()
 
 for i in range(3):#sol_c.shape[1]):
-    plt.plot(x_data, sol_c1[:, i])#, label='c1')
-    plt.plot(x_data, c1_data_[i, :])#, label='c1_data')
+    plt.plot(x_data, sol_c1_[i, :],'k')#, label='c1')
+    plt.plot(x_data, c1_data_[i, :],'*r')#, label='c1_data')
 plt.xlabel('x')
 plt.ylabel('fun')
 plt.title('Comparison')
