@@ -12,11 +12,16 @@ import matplotlib.pyplot as plt
 import os
 
 #%%
+# USER INPUTS
 # Testcase (choose the one you want to run)
 testcase = "testcase0"
-data_weight = 1000
+data_weight = 1.0
 ic_weight = 0.0
-learning_rate = 1e-3
+learning_rate = 1e-1
+epochs = 200
+train_parameters = False
+num_hidden_layers = 5
+num_neurons_per_layer = 5
 
 # Check if the folder exists
 datafolder = "../data/"+testcase
@@ -46,54 +51,22 @@ c_train = c_data.astype(np.float32)
 c1_train = c1_data.astype(np.float32)
 
 # additional variables added to gradient tracking
-beta0 = tf.Variable([p[0]], trainable=False)
-d = tf.Variable([p[1]], trainable=False)
-u = tf.Variable([p[2]], trainable=False)
-beta1 = tf.Variable([p[3]], trainable=False)
-lambda1 = tf.Variable([p[4]], trainable=False)
+beta0 = tf.Variable([p[0]], trainable=train_parameters)
+d = tf.Variable([p[1]], trainable=train_parameters)
+u = tf.Variable([p[2]], trainable=train_parameters)
+beta1 = tf.Variable([p[3]], trainable=train_parameters)
+lambda1 = tf.Variable([p[4]], trainable=train_parameters)
 
 #%%
-### Original ###
-# def PINNModel():
-#     x_input = keras.Input(shape=(1,))
-#     t_input = keras.Input(shape=(1,))
-#
-#     combined = layers.concatenate([x_input, t_input])
-#
-#     # NN for theta
-#     # Process x using dense layers with non-negative kernels
-#     output_c = keras.Sequential([
-#         layers.Dense(128,
-#                      activation='relu',
-#                      kernel_initializer='glorot_normal',
-#                      # kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
-#                      ),
-#         layers.Dense(128,
-#                      activation='relu',
-#                      kernel_initializer='random_normal',
-#                      # kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
-#                      ),
-#         layers.Dense(128,
-#                      activation='relu',
-#                      kernel_initializer='glorot_normal',
-#                      # kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
-#                      ),
-#         layers.Dense(2,
-#                      activation='relu',
-#                      kernel_initializer='random_normal',
-#                      # kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
-#                      )
-#     ])(combined)
-#
-#     return keras.Model(inputs=[x_input, t_input], outputs=output_c)
+# Define the PINN model
 
-def pinn_model(num_hidden_layers=8, num_neurons_per_layer=20):
+def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_neurons_per_layer):
     x_input = keras.Input(shape=(1,))
     t_input = keras.Input(shape=(1,))
 
-    combined = layers.concatenate([x_input, t_input])
-
-    output_c = combined
+    output_c = layers.concatenate([x_input, t_input]) # input layer
+    
+    # hidden layers
     for _ in range(num_hidden_layers):
         output_c = tf.keras.layers.Dense(num_neurons_per_layer,
                                          activation='tanh',
@@ -101,6 +74,14 @@ def pinn_model(num_hidden_layers=8, num_neurons_per_layer=20):
                                          kernel_initializer='glorot_normal',
                                          # kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
                                          )(output_c)
+    
+    # output layer ## FABIO: do we need this???? it makes sense to me....
+    output_c = tf.keras.layers.Dense(2,
+                                    activation='tanh',
+                                    kernel_constraint=NonNeg(),
+                                    kernel_initializer='glorot_normal',
+                                    # kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
+                                    )(output_c)
 
     return keras.Model(inputs=[x_input, t_input], outputs=output_c)
 
@@ -144,13 +125,13 @@ def custom_loss(inputs, model):
 # Create the PINN model
 model = pinn_model()
 trainable = model.trainable_variables
-# trainable.append(beta0)
-# trainable.append(beta1)
-# trainable.append(lambda1)
-# trainable.append(u)
-# trainable.append(d)
+if train_parameters:
+    trainable.append(beta0)
+    trainable.append(beta1)
+    trainable.append(lambda1)
+    trainable.append(u)
+    trainable.append(d)
 
-epochs = 100  # 1000
 # # Compile the model
 # model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-3),
 #               loss=lambda y_true, y_pred: custom_loss([x_train, t_train, theta_train], model)[1])
@@ -206,11 +187,12 @@ for epoch in range(epochs):
         d_values.append(d.numpy())
 
         current_lr = optimizer._decayed_lr(tf.float32).numpy()
-        # beta0.assign_sub(gradients[-5] * current_lr)
-        # beta1.assign_sub(gradients[-4] * current_lr)
-        # lambda1.assign_sub(gradients[-3] * current_lr)
-        # u.assign_sub(gradients[-2] * current_lr)
-        # d.assign_sub(gradients[-1] * current_lr)
+        if train_parameters:
+            beta0.assign_sub(gradients[-5] * current_lr)
+            beta1.assign_sub(gradients[-4] * current_lr)
+            lambda1.assign_sub(gradients[-3] * current_lr)
+            u.assign_sub(gradients[-2] * current_lr)
+            d.assign_sub(gradients[-1] * current_lr)
 
         if epoch % 1 == 0:
             print(f"Epoch {epoch + 1}/{epochs}, Loss: {loss.numpy()}")
@@ -224,10 +206,10 @@ for epoch in range(epochs):
 print('\nComputation time: {} seconds'.format(time() - t0))
 
 # Plot the loss history
-plt.plot(losses, label='Total Loss')
-plt.plot(pde_losses, label='PDE Loss')
-plt.plot(data_fitting_losses, label='Data Fitting Loss')
-plt.plot(ic_c1_fitting_losses, label='IC c1 Fitting Loss')
+plt.semilogy(losses, label='Total Loss')
+plt.semilogy(pde_losses, label='PDE Loss')
+plt.semilogy(data_fitting_losses, label='Data Fitting Loss')
+plt.semilogy(ic_c1_fitting_losses, label='IC c1 Fitting Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Loss Contributions')
