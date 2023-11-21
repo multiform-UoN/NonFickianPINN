@@ -15,13 +15,14 @@ import os
 # USER INPUTS
 # Testcase (choose the one you want to run)
 testcase = "testcase0"
+pde_weight = 0.0
 data_weight = 1.0
 ic_weight = 0.0
-learning_rate = 1e-1
+learning_rate = 1e-2
 epochs = 200
 train_parameters = False
-num_hidden_layers = 5
-num_neurons_per_layer = 5
+num_hidden_layers = 20
+num_neurons_per_layer = 40
 
 # Check if the folder exists
 datafolder = "../data/"+testcase
@@ -70,17 +71,14 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
     for _ in range(num_hidden_layers):
         output_c = tf.keras.layers.Dense(num_neurons_per_layer,
                                          activation='tanh',
-                                         kernel_constraint=NonNeg(),
-                                         kernel_initializer='glorot_normal',
-                                         # kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
+                                        #  kernel_constraint=NonNeg(),
+                                        #  kernel_initializer='glorot_normal',
+                                        #  kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
                                          )(output_c)
     
     # output layer ## FABIO: do we need this???? it makes sense to me....
     output_c = tf.keras.layers.Dense(2,
-                                    activation='tanh',
-                                    kernel_constraint=NonNeg(),
-                                    kernel_initializer='glorot_normal',
-                                    # kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
+                                    activation=None
                                     )(output_c)
 
     return keras.Model(inputs=[x_input, t_input], outputs=output_c)
@@ -115,7 +113,7 @@ def custom_loss(inputs, model):
     data_c1_fitting_loss = tf.reduce_mean((c1_model - c1_data) ** 2)
     data_fitting_loss = data_c_fitting_loss + data_c1_fitting_loss
     ic_c1_fitting_loss = tf.reduce_mean(c1_model[0:nt] ** 2)
-    loss = pde_loss + data_weight*data_fitting_loss + ic_weight*ic_c1_fitting_loss
+    loss = pde_weight*pde_loss + data_weight*data_fitting_loss + ic_weight*ic_c1_fitting_loss
 
     del tape
 
@@ -229,7 +227,7 @@ sol_c1_ = tf.reshape(sol_c1, [t_data.shape[0], x_data.shape[0]])
 c_data_ = tf.reshape(c_data, [t_data.shape[0], x_data.shape[0]])
 c1_data_ = tf.reshape(c1_data, [t_data.shape[0], x_data.shape[0]])
 # Plot solutions
-for i in range(3):#sol_c.shape[1]):
+for i in range(sol_c_.shape[0]):
     plt.plot(x_data, sol_c_[i, :],'k')#, label='c')
     plt.plot(x_data, c_data_[i, :],'*r')#, label='c_data')
 plt.xlabel('x')
@@ -239,7 +237,7 @@ plt.legend()
 plt.grid()
 plt.show()
 
-for i in range(3):#sol_c.shape[1]):
+for i in range(sol_c_.shape[0]):
     plt.plot(x_data, sol_c1_[i, :],'k')#, label='c1')
     plt.plot(x_data, c1_data_[i, :],'*r')#, label='c1_data')
 plt.xlabel('x')
