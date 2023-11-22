@@ -1,36 +1,7 @@
-%% multirate.m -- an executable m-file for solving a partial differential equation
-% Automatically created in CHEBGUI by user pmzmi1.
-% Created on October 31, 2023 at 10:53.
+%% multirate1.m
+% This script solves the multirate model
+% Matteo Icardi, 2023
 
-%% Problem description.
-% Solving
-%   u_t = u" - v,
-%   v" - u = 0,
-% for x in [-1,1] and t in [0,2], subject to
-%   u = 1, v = 1 at x = -1
-% and
-%   u = 1, v = 1 at x = 1
-
-%% Problem set-up
-L=1;
-T = 1;
-nt = 50;
-nx = 100;
-
-%% Construct a chebfun of the space variable on the domain and time vector
-dom = [0 L];
-xx = 0:L/nx:L;
-t = 0:T/nt:T;
-x = chebfun(@(x) x, dom);
-
-%% Assign boundary conditions.
-bc.left = @(t,u,v) [u-abs(cos(omega*2*pi*t))];
-bc.right = @(t,u,v) [diff(u)];
-
-% and of the initial conditions.
-u0 = 1-tanh(x*10);
-v0 = 0.*x;
-sol0 = [u0, v0];
 
 % %% Testcase 1
 % datafolder = "../data/testcase1/";
@@ -40,18 +11,55 @@ sol0 = [u0, v0];
 % betak = 0.1;
 % lambdak = -10;
 % omega = 0;
+% nt = 100;
+% nx = 100;
 
 
-%% Testcase 0
-datafolder = "../data/testcase0/";
-beta = 1;
+
+% %% Testcase 0
+% datafolder = "../data/testcase0/";
+% beta = 1;
+% D = 1;
+% V = 0;
+% betak = 0;
+% lambdak = 0;
+% omega = 0;
+% nt = 50;
+% nx = 100;
+
+
+%% Testcase 2
+datafolder = "../data/testcase2/";
+beta = .5;
 D = 1;
-V = 0;
-betak = 0;
-lambdak = 0;
+V = 1;
+betak = .5;
+lambdak = -100;
+nt = 10;
+nx = 10;
+
+%% Problem set-up
+L = 1;
+T = 1;
+
+%% Construct a chebfun of the space variable on the domain and time vector
+dom = [0 L];
+xx = 0:L/nx:L;
+t = 0:T/nt:T;
+x = chebfun(@(x) x, dom);
+
+%% boundary conditions.
+bc.left = @(t,u,v) [u-1];
+bc.right = @(t,u,v) [diff(u)];
+
+%% initial conditions.
+u0 = 1-tanh(x*10);
+v0 = 0.*x;
+sol0 = [u0, v0];
+
+%% Time dependent initial conditions
 omega = 0;
-
-
+bc.left = @(t,u,v) [u-abs(cos(omega*2*pi*t))];
 
 %% Make the right-hand side of the PDE.
 pdefun = @(t,x,u,v) [ ...

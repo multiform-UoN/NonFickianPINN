@@ -14,15 +14,17 @@ import os
 #%%
 # USER INPUTS
 # Testcase (choose the one you want to run)
-testcase = "testcase0"
-pde_weight = 0.0
+testcase = "testcase1"
+pde_weight = 1.0
 data_weight = 1.0
-ic_weight = 0.0
-learning_rate = 1e-2
-epochs = 200
-train_parameters = False
+ic_weight = 100.0
+bc_weight = 10.0
+learning_rate = 6e-4
+epochs = 1000
+train_parameters = True
 num_hidden_layers = 20
-num_neurons_per_layer = 40
+num_neurons_per_layer = 100
+activation = 'sigmoid' # 'sigmoid' or 'tanh'
 
 # Check if the folder exists
 datafolder = "../data/"+testcase
@@ -65,23 +67,23 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
     x_input = keras.Input(shape=(1,))
     t_input = keras.Input(shape=(1,))
 
-    output_c = layers.concatenate([x_input, t_input]) # input layer
+    output_c = layers.concatenate([t_input, x_input]) # input layer
     
     # hidden layers
     for _ in range(num_hidden_layers):
         output_c = tf.keras.layers.Dense(num_neurons_per_layer,
-                                         activation='tanh',
-                                        #  kernel_constraint=NonNeg(),
-                                        #  kernel_initializer='glorot_normal',
+                                         activation=activation,  
+                                        #  kernel_constraint=NonNeg(), # this gives trivial constant fitting
+                                         kernel_initializer='glorot_normal',
                                         #  kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
                                          )(output_c)
     
-    # output layer ## FABIO: do we need this???? it makes sense to me....
+    # output layer
     output_c = tf.keras.layers.Dense(2,
-                                    activation=None
+                                    activation=None  # to check
                                     )(output_c)
 
-    return keras.Model(inputs=[x_input, t_input], outputs=output_c)
+    return keras.Model(inputs=[t_input, x_input], outputs=output_c)
 
 
 # @tf.function
@@ -110,14 +112,17 @@ def custom_loss(inputs, model):
     pde_loss_c1 = tf.reduce_mean((c1_t - tf.multiply(lambda1, c1_model - c_model)) ** 2)
     pde_loss = pde_loss_c + pde_loss_c1
     data_c_fitting_loss = tf.reduce_mean((c_model - c_data) ** 2)
+    data_bc_fitting_loss = tf.reduce_mean((c_model[::nx] - c_data[::nx]) ** 2)
     data_c1_fitting_loss = tf.reduce_mean((c1_model - c1_data) ** 2)
     data_fitting_loss = data_c_fitting_loss + data_c1_fitting_loss
-    ic_c1_fitting_loss = tf.reduce_mean(c1_model[0:nt] ** 2)
-    loss = pde_weight*pde_loss + data_weight*data_fitting_loss + ic_weight*ic_c1_fitting_loss
+    ic_c1_fitting_loss = tf.reduce_mean((c1_model[0:nt] - c1_data[0:nt]) ** 2)
+    ic_c_fitting_loss = tf.reduce_mean((c_model[0:nt] - c_data[0:nt])  ** 2)
+    ic_fitting_loss = ic_c_fitting_loss + ic_c1_fitting_loss
+    loss = pde_weight*pde_loss + data_weight*data_fitting_loss + ic_weight*ic_fitting_loss + bc_weight*data_bc_fitting_loss
 
     del tape
 
-    return loss, pde_loss, data_fitting_loss, ic_c1_fitting_loss
+    return loss, pde_loss, data_fitting_loss, ic_c1_fitting_loss, data_bc_fitting_loss
 
 
 # Create the PINN model
@@ -143,7 +148,8 @@ optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate)
 losses = []
 pde_losses = []
 data_fitting_losses = []
-ic_c1_fitting_losses = []
+ic_fitting_losses = []
+data_bc_fitting_losses = []
 beta0_values = []
 beta1_values = []
 lambda1_values = []
@@ -167,7 +173,7 @@ for epoch in range(epochs):
         print("# STARTING EPOCH", epoch + 1)
 
         with tf.GradientTape() as tape:
-            loss, pde_loss, data_fitting_loss, ic_c1_fitting_loss = custom_loss(inputs, model)
+            loss, pde_loss, data_fitting_loss, ic_fitting_loss, data_bc_fitting_loss = custom_loss(inputs, model)
 
         print("Computing gradients")
         gradients = tape.gradient(loss, trainable)
@@ -177,7 +183,8 @@ for epoch in range(epochs):
         losses.append(loss.numpy())
         pde_losses.append(pde_loss.numpy())
         data_fitting_losses.append(data_fitting_loss.numpy())
-        ic_c1_fitting_losses.append(ic_c1_fitting_loss.numpy())
+        data_bc_fitting_losses.append(data_bc_fitting_loss.numpy())
+        ic_fitting_losses.append(ic_fitting_loss.numpy())
         beta0_values.append(beta0.numpy())
         beta1_values.append(beta1.numpy())
         lambda1_values.append(lambda1.numpy())
@@ -185,7 +192,7 @@ for epoch in range(epochs):
         d_values.append(d.numpy())
 
         current_lr = optimizer._decayed_lr(tf.float32).numpy()
-        if train_parameters:
+        if train_parameters: # perhaps this needs to be applied only after a certain number of epochs
             beta0.assign_sub(gradients[-5] * current_lr)
             beta1.assign_sub(gradients[-4] * current_lr)
             lambda1.assign_sub(gradients[-3] * current_lr)
@@ -207,7 +214,8 @@ print('\nComputation time: {} seconds'.format(time() - t0))
 plt.semilogy(losses, label='Total Loss')
 plt.semilogy(pde_losses, label='PDE Loss')
 plt.semilogy(data_fitting_losses, label='Data Fitting Loss')
-plt.semilogy(ic_c1_fitting_losses, label='IC c1 Fitting Loss')
+plt.semilogy(ic_fitting_losses, label='IC Fitting Loss')
+plt.semilogy(data_bc_fitting_losses, label='BC Fitting Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Loss Contributions')
@@ -218,7 +226,7 @@ plt.show()
 
 #%%
 # Plot the solutions
-solutions = model([x_train, t_train])
+solutions = model([t_train, x_train])
 sol_c = solutions[:, 0]
 sol_c1 = solutions[:, 1]
 
