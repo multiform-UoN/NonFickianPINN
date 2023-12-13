@@ -1,5 +1,6 @@
 #%%
 # import
+#############################
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -17,21 +18,22 @@ tf.config.threading.set_inter_op_parallelism_threads(4)
  
 #%%
 # USER INPUTS
+#############################
 
 testcase = "testcase0" # Testcase (choose the one you want to run)
 
 pde_weight = 1.0      # penalty for the PDE
 data_weight = 0.0     # penalty for the data fitting
-ic_weight = 1.0     # penalty for the initial condition
-bc_weight = 1.0     # penalty for the boundary condition
+ic_weight = 1e2     # penalty for the initial condition
+bc_weight = 1e2     # penalty for the boundary condition
 
-learning_rate = 1e-4   # learning rate for the network weights
-# learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([10, 100], [1e-1, 5e-2, 1e-2])  #OK
+learning_rate = 3e-3   # learning rate for the network weights
+# learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([10, 100], [1e-2, .5e-2, .1e-2])  #OK
 # learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([100, 300], [1e-3, 1e-4, .5e-4])
 
-epochs = 5000          # number of epochs
-num_hidden_layers = 10 # number of hidden layers (depth of the network)
-num_neurons = 100      # max number of neurons per layer (width of the network)
+epochs = 2000          # number of epochs
+num_hidden_layers = 4 # number of hidden layers (depth of the network)
+num_neurons = 250      # max number of neurons per layer (width of the network)
 def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the depth of the network)
     return num_neurons    # constant number of neurons
     # return np.floor(num_neurons*(np.exp(-(depth-0.5)**2 * np.log(num_neurons/2.1)/((0.5)**2))))  # Gaussian distribution of neurons
@@ -41,6 +43,10 @@ train_parameters = False # train the parameters or not
 def learning_rate_parameters(learning_rate, epoch): # learning rate for parameters
     return learning_rate*0
 param_perturbation = 0;#5e-1 # perturbation for the parameters
+
+#%%
+# Load data
+#############################
 
 # Check if the folder exists
 datafolder = "../data/"+testcase
@@ -89,6 +95,8 @@ u = tf.Variable([randp[2]], trainable=train_parameters)
 
 #%%
 # Define the PINN model
+#############################
+
 def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_neurons_per_layer):
     x_input = keras.Input(shape=(1,))
     t_input = keras.Input(shape=(1,))
@@ -104,10 +112,10 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
                                         #  kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
                                          )(output_c)
     
-    # # output layer
-    # output_c = tf.keras.layers.Dense(1,
-    #                                 activation=None  # to check
-    #                                 )(output_c)
+    # output layer
+    output_c = tf.keras.layers.Dense(1,
+                                    activation=None  # to check
+                                    )(output_c)
 
     return keras.Model(inputs=[t_input, x_input], outputs=output_c)
 
@@ -137,14 +145,14 @@ def custom_loss(inputs, model):
         (tf.multiply(beta0, c_t) + div_output) ** 2
         )
     data_c_fitting_loss = tf.reduce_mean((c_model - c_data) ** 2)
-    data_bc_fitting_loss = tf.reduce_mean((c_model[::nx] - c_data[::nx]) ** 2 # dirichlet based on data
+    bc_fitting_loss = tf.reduce_mean((c_model[::nx] - c_data[::nx]) ** 2 # dirichlet based on data
                             + (c_x[(nx-1)::nx]) ** 2) # neumann zero
     data_fitting_loss = data_c_fitting_loss
     ic_fitting_loss = tf.reduce_mean((c_model[0:nt] - c_data[0:nt])  ** 2)
-    loss = pde_weight*pde_loss + data_weight*data_fitting_loss + ic_weight*ic_fitting_loss + bc_weight*data_bc_fitting_loss
+    loss = pde_weight*pde_loss + data_weight*data_fitting_loss + ic_weight*ic_fitting_loss + bc_weight*bc_fitting_loss
 
 
-    return loss, pde_loss, data_fitting_loss, ic_fitting_loss, data_bc_fitting_loss
+    return loss, pde_loss, data_fitting_loss, ic_fitting_loss, bc_fitting_loss
 
 
 # Create the PINN model
@@ -154,6 +162,11 @@ if train_parameters:
     trainable.append(beta0)
     trainable.append(u)
     trainable.append(d)
+
+
+#%%
+# Train the NN
+#############################
 
 # # Compile the model
 # model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-3),
@@ -182,7 +195,7 @@ for epoch in range(epochs):
         # Compute the gradients
         with tf.GradientTape() as tape:
             # Call the tf decorated loss function
-            loss, pde_loss, data_fitting_loss, ic_fitting_loss, data_bc_fitting_loss = custom_loss(inputs, model)
+            loss, pde_loss, data_fitting_loss, ic_fitting_loss, bc_fitting_loss = custom_loss(inputs, model)
             gradients = tape.gradient(loss, trainable)
         
         # Apply the gradients to update the weights
@@ -209,14 +222,17 @@ for epoch in range(epochs):
             print(f"Epoch {epoch + 1}/{epochs}, Loss: {loss.numpy()}")
             print(f"beta0={beta0.numpy()}, d={d.numpy()}, u={u.numpy()} ")
 
-        # Check if the loss is not decreasing anymore
-        if len(losses) > 2 and (np.abs(losses[-1] - losses[-2]))/np.abs(losses[-2]) < 1e-8:
-            stop = True
+        # # Check if the loss is not decreasing anymore
+        # if len(losses) > 2 and (np.abs(losses[-1] - losses[-2]))/np.abs(losses[-2]) < 1e-8:
+        #     stop = True
 
 # Print computation time
 print('\nComputation time: {} seconds'.format(time() - t0))
 
 #%%
+# Plottings
+#############################
+
 # Plot the loss history (relative)
 plt.semilogy(losses/losses[0], label='Total Loss')
 plt.semilogy(pde_losses/pde_losses[0], label='PDE Loss')
@@ -243,7 +259,6 @@ plt.legend()
 plt.grid()
 plt.show()
 
-#%%
 # Plot the solutions
 solutions = model([t_train, x_train])
 sol_c = solutions[:, 0]
