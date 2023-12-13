@@ -31,7 +31,7 @@ learning_rate = 3e-3   # learning rate for the network weights
 # learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([10, 100], [1e-2, .5e-2, .1e-2])  #OK
 # learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([100, 300], [1e-3, 1e-4, .5e-4])
 
-epochs = 2000          # number of epochs
+epochs = 5000          # number of epochs
 num_hidden_layers = 4 # number of hidden layers (depth of the network)
 num_neurons = 250      # max number of neurons per layer (width of the network)
 def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the depth of the network)
@@ -180,7 +180,7 @@ losses = []
 pde_losses = []
 data_fitting_losses = []
 ic_fitting_losses = []
-data_bc_fitting_losses = []
+bc_fitting_losses = []
 beta0_values = []
 u_values = []
 d_values = []
@@ -214,7 +214,7 @@ for epoch in range(epochs):
             losses.append(loss.numpy())
             pde_losses.append(pde_loss.numpy())
             data_fitting_losses.append(data_fitting_loss.numpy())
-            data_bc_fitting_losses.append(data_bc_fitting_loss.numpy())
+            bc_fitting_losses.append(bc_fitting_loss.numpy())
             ic_fitting_losses.append(ic_fitting_loss.numpy())
             beta0_values.append(beta0.numpy())
             u_values.append(u.numpy())
@@ -238,7 +238,7 @@ plt.semilogy(losses/losses[0], label='Total Loss')
 plt.semilogy(pde_losses/pde_losses[0], label='PDE Loss')
 plt.semilogy(data_fitting_losses/data_fitting_losses[0], label='Data Fitting Loss')
 plt.semilogy(ic_fitting_losses/ic_fitting_losses[0], label='IC Fitting Loss')
-plt.semilogy(data_bc_fitting_losses/data_bc_fitting_losses[0], label='BC Fitting Loss')
+plt.semilogy(bc_fitting_losses/bc_fitting_losses[0], label='BC Fitting Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Loss Contributions')
@@ -251,7 +251,7 @@ plt.semilogy(losses, label='Total Loss')
 plt.semilogy(pde_losses, label='PDE Loss')
 plt.semilogy(data_fitting_losses, label='Data Fitting Loss')
 plt.semilogy(ic_fitting_losses, label='IC Fitting Loss')
-plt.semilogy(data_bc_fitting_losses, label='BC Fitting Loss')
+plt.semilogy(bc_fitting_losses, label='BC Fitting Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Loss Contributions')
