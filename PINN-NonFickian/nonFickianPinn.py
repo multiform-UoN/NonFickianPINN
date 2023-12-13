@@ -11,26 +11,33 @@ from time import time
 import matplotlib.pyplot as plt
 import os
 
+# Configure TensorFlow to use the specified number of threads
+tf.config.threading.set_intra_op_parallelism_threads(1)
+tf.config.threading.set_inter_op_parallelism_threads(1)
+ 
 #%%
 # USER INPUTS
 
-testcase = "testcase2" # Testcase (choose the one you want to run)
+testcase = "testcase1" # Testcase (choose the one you want to run)
 
 pde_weight = 1.0      # penalty for the PDE
 data_weight = 1.0     # penalty for the data fitting
 ic_weight = 100.0     # penalty for the initial condition
 bc_weight = 100.0     # penalty for the boundary condition
 
-learning_rate = 1e-3  # learning rate for the network weights
-epochs = 3000         # number of epochs
-num_hidden_layers = 30
-num_neurons_per_layer = 100
+learning_rate = 3e-4   # learning rate for the network weights
+epochs = 5000          # number of epochs
+num_hidden_layers = 10 # number of hidden layers (depth of the network)
+num_neurons = 300      # max number of neurons per layer (width of the network)
+def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the depth of the network)
+    return num_neurons    # constant number of neurons
+    # return np.floor(num_neurons*(np.exp(-(depth-0.5)**2 * np.log(num_neurons/2.1)/((0.5)**2))))  # Gaussian distribution of neurons
 activation = 'tanh' # 'sigmoid' or 'tanh'
 
 train_parameters = True # train the parameters or not
 def learning_rate_parameters(learning_rate, epoch): # learning rate for parameters
     return learning_rate*0
-param_perturbation = 1e-2 # perturbation for the parameters
+param_perturbation = 5e-1 # perturbation for the parameters
 
 # Check if the folder exists
 datafolder = "../data/"+testcase
@@ -91,18 +98,18 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
     output_c = layers.concatenate([t_input, x_input]) # input layer
     
     # hidden layers
-    for _ in range(num_hidden_layers):
-        output_c = tf.keras.layers.Dense(num_neurons_per_layer,
+    for i in range(num_hidden_layers):
+        output_c = tf.keras.layers.Dense(num_neurons_per_layer((i+1)/num_hidden_layers),
                                          activation=activation,  
                                         #  kernel_constraint=NonNeg(), # this gives trivial constant fitting
                                          kernel_initializer='glorot_normal',
                                         #  kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
                                          )(output_c)
     
-    # output layer
-    output_c = tf.keras.layers.Dense(2,
-                                    activation=None  # to check
-                                    )(output_c)
+    # # output layer
+    # output_c = tf.keras.layers.Dense(2,
+    #                                 activation=None  # to check
+    #                                 )(output_c)
 
     return keras.Model(inputs=[t_input, x_input], outputs=output_c)
 
@@ -199,8 +206,6 @@ for epoch in range(epochs):
         
         # Apply the gradients to update the weights
         optimizer.apply_gradients(zip(gradients, trainable))
-        
-        del tape
 
         # Update parameters
         current_lr = learning_rate_parameters(optimizer.learning_rate.numpy(), epoch)
@@ -234,6 +239,7 @@ for epoch in range(epochs):
 # Print computation time
 print('\nComputation time: {} seconds'.format(time() - t0))
 
+#%%
 # Plot the loss history
 plt.semilogy(losses, label='Total Loss')
 plt.semilogy(pde_losses, label='PDE Loss')

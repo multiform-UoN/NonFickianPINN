@@ -10,7 +10,6 @@
 % V = 1;
 % betak = 0.1;
 % lambdak = -10;
-% omega = 0;
 % nt = 100;
 % nx = 100;
 
@@ -23,7 +22,6 @@
 % V = 0;
 % betak = 0;
 % lambdak = 0;
-% omega = 0;
 % nt = 50;
 % nx = 100;
 

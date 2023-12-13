@@ -1,5 +1,5 @@
 ### testcase0
-## pure diffusion
+# pure diffusion
 
 
 
@@ -7,7 +7,8 @@
 
 
 ### testcase1
-## advection diffusion with mobile-immobile
+# advection diffusion with mobile-immobile
+# 100x100 data points
 pde_weight = 1.0
 data_weight = 1.0
 ic_weight = 100.0
@@ -18,3 +19,6 @@ train_parameters = False
 num_hidden_layers = 20
 num_neurons_per_layer = 40
 
+### testcase2
+# advection diffusion with mobile-immobile
+# fewer data points (10,10)
