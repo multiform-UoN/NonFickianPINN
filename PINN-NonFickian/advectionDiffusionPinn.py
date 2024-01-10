@@ -23,15 +23,18 @@ tf.config.threading.set_inter_op_parallelism_threads(4)
 testcase = "testcase0" # Testcase (choose the one you want to run)
 
 pde_weight = 1.0      # penalty for the PDE
-data_weight = 0.0     # penalty for the data fitting
+data_weight = 1.0     # penalty for the data fitting
 ic_weight = 1e2     # penalty for the initial condition
 bc_weight = 1e2     # penalty for the boundary condition
 
-learning_rate = 3e-3   # learning rate for the network weights
+learning_rate = 1e-3   # learning rate for the network weights
 # learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([10, 100], [1e-2, .5e-2, .1e-2])  #OK
 # learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([100, 300], [1e-3, 1e-4, .5e-4])
 
-epochs = 5000          # number of epochs
+# correction of the learning rate for the parameters
+learning_rate_param = 1 # learning rate for the parameters
+
+epochs = 1000          # number of epochs
 num_hidden_layers = 4 # number of hidden layers (depth of the network)
 num_neurons = 250      # max number of neurons per layer (width of the network)
 def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the depth of the network)
@@ -39,9 +42,7 @@ def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the 
     # return np.floor(num_neurons*(np.exp(-(depth-0.5)**2 * np.log(num_neurons/2.1)/((0.5)**2))))  # Gaussian distribution of neurons
 activation = 'tanh' # 'sigmoid' or 'tanh'
 
-train_parameters = False # train the parameters or not
-def learning_rate_parameters(learning_rate, epoch): # learning rate for parameters
-    return learning_rate*0
+train_parameters = True # train the parameters or not
 param_perturbation = 0;#5e-1 # perturbation for the parameters
 
 #%%
@@ -86,8 +87,8 @@ xx = tf.Variable(x_train)
 # model inputs
 inputs = [xx, tt, c_data_train]
 
-
 # additional variables added to gradient tracking
+p = p[:3]
 randp =  (p * (param_perturbation * np.random.randn(p.size) + 1)).astype(np.float32)
 beta0 = tf.Variable([randp[0]], trainable=train_parameters)
 d = tf.Variable([randp[1]], trainable=train_parameters)
@@ -112,10 +113,10 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
                                         #  kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
                                          )(output_c)
     
-    # output layer
-    output_c = tf.keras.layers.Dense(1,
-                                    activation=None  # to check
-                                    )(output_c)
+    # # output layer
+    # output_c = tf.keras.layers.Dense(1,
+    #                                 activation=None  # to check
+    #                                 )(output_c)
 
     return keras.Model(inputs=[t_input, x_input], outputs=output_c)
 
@@ -141,9 +142,13 @@ def custom_loss(inputs, model):
     del tape
 
     # Compute the components of loss function
-    pde_loss = tf.reduce_mean(
-        (tf.multiply(beta0, c_t) + div_output) ** 2
-        )
+    norm_weight = x_data.max()[0]**2 / (tf.multiply(beta0,d)) # normalization factor
+    pde_loss = tf.reduce_mean(tf.multiply(norm_weight, (
+        (tf.multiply(beta0, c_t) + div_output) ** 2 
+        ))) # PDE loss
+    # pde_loss = tf.reduce_mean(
+    #     (tf.multiply(beta0, c_t) + div_output) ** 2 
+    #     ) # PDE loss
     data_c_fitting_loss = tf.reduce_mean((c_model - c_data) ** 2)
     bc_fitting_loss = tf.reduce_mean((c_model[::nx] - c_data[::nx]) ** 2 # dirichlet based on data
                             + (c_x[(nx-1)::nx]) ** 2) # neumann zero
@@ -167,10 +172,6 @@ if train_parameters:
 #%%
 # Train the NN
 #############################
-
-# # Compile the model
-# model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-3),
-#               loss=lambda y_true, y_pred: custom_loss([x_train, t_train, theta_train], model)[1])
 
 # Create the optimizer with a smaller learning rate
 optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate,epsilon=1e-08,amsgrad=True)
@@ -198,16 +199,12 @@ for epoch in range(epochs):
             loss, pde_loss, data_fitting_loss, ic_fitting_loss, bc_fitting_loss = custom_loss(inputs, model)
             gradients = tape.gradient(loss, trainable)
         
+        # scale the gradients wrt to the parameters
+        for i in range(-len(p), 0):
+            gradients[i] *= learning_rate_param
+
         # Apply the gradients to update the weights
         optimizer.apply_gradients(zip(gradients, trainable))
-
-        # # Update parameters
-        # current_lr = learning_rate_parameters(optimizer.learning_rate.numpy(), epoch)
-        # # perhaps this needs to be applied only after a certain number of epochs
-        # if train_parameters: 
-        #     beta0.assign_sub(gradients[-5] * current_lr)
-        #     u.assign_sub(gradients[-2] * current_lr)
-        #     d.assign_sub(gradients[-1] * current_lr)
 
         # Save the losses parameters and outputs to screen
         if epoch % 1 == 0:
