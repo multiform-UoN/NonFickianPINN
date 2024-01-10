@@ -23,8 +23,8 @@ tf.config.threading.set_inter_op_parallelism_threads(4)
 testcase = "testcase0" # Testcase (choose the one you want to run)
 
 pde_weight = 1.0      # penalty for the PDE
-data_weight = 1.0     # penalty for the data fitting
-ic_weight = 1e2     # penalty for the initial condition
+data_weight = 0.0     # penalty for the data fitting
+ic_weight = 1e3     # penalty for the initial condition
 bc_weight = 1e2     # penalty for the boundary condition
 
 learning_rate = 1e-3   # learning rate for the network weights
@@ -32,17 +32,17 @@ learning_rate = 1e-3   # learning rate for the network weights
 # learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([100, 300], [1e-3, 1e-4, .5e-4])
 
 # correction of the learning rate for the parameters
-learning_rate_param = 1 # learning rate for the parameters
+learning_rate_param = 0 # learning rate for the parameters
 
 epochs = 1000          # number of epochs
 num_hidden_layers = 4 # number of hidden layers (depth of the network)
-num_neurons = 250      # max number of neurons per layer (width of the network)
+num_neurons = 100      # max number of neurons per layer (width of the network)
 def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the depth of the network)
     return num_neurons    # constant number of neurons
     # return np.floor(num_neurons*(np.exp(-(depth-0.5)**2 * np.log(num_neurons/2.1)/((0.5)**2))))  # Gaussian distribution of neurons
 activation = 'tanh' # 'sigmoid' or 'tanh'
 
-train_parameters = True # train the parameters or not
+train_parameters = False # train the parameters or not
 param_perturbation = 0;#5e-1 # perturbation for the parameters
 
 #%%
@@ -200,8 +200,9 @@ for epoch in range(epochs):
             gradients = tape.gradient(loss, trainable)
         
         # scale the gradients wrt to the parameters
-        for i in range(-len(p), 0):
-            gradients[i] *= learning_rate_param
+        if (train_parameters):
+            for i in range(-len(p), 0):
+                gradients[i] *= learning_rate_param
 
         # Apply the gradients to update the weights
         optimizer.apply_gradients(zip(gradients, trainable))
