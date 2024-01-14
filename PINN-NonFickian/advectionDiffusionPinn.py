@@ -34,8 +34,8 @@ learning_rate = 1e-3   # learning rate for the network weights
 # correction of the learning rate for the parameters
 learning_rate_param = 0 # learning rate for the parameters
 
-epochs = 1000          # number of epochs
-num_hidden_layers = 4 # number of hidden layers (depth of the network)
+epochs = 2000          # number of epochs
+num_hidden_layers = 10 # number of hidden layers (depth of the network)
 num_neurons = 100      # max number of neurons per layer (width of the network)
 def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the depth of the network)
     return num_neurons    # constant number of neurons
@@ -44,6 +44,7 @@ activation = 'tanh' # 'sigmoid' or 'tanh'
 
 train_parameters = False # train the parameters or not
 param_perturbation = 0;#5e-1 # perturbation for the parameters
+data_perturbation = 0;#5e-1 # perturbation for the data
 
 #%%
 # Load data
@@ -69,23 +70,28 @@ Xgrid = np.vstack([X_data.flatten(), T_data.flatten()]).T
 Xgrid_data = Xgrid[:, 0]
 Tgrid_data = Xgrid[:, 1]
 
+# perturb data randomly
+# c_data = c_data + data_perturbation * np.random.randn(c_data.size).reshape(c_data.shape) # additive noise
+c_data = c_data * (1 + data_perturbation * np.random.randn(c_data.size).reshape(c_data.shape)) # multiplicative noise
+
 # convert data to numpy arrays and float32
 p = np.array(p).squeeze().astype(np.float32)
-x_train = Xgrid_data.astype(np.float32)
-t_train = Tgrid_data.astype(np.float32)
-c_train = c_data.astype(np.float32)
+x_data = Xgrid_data.astype(np.float32)
+t_data = Tgrid_data.astype(np.float32)
+c_data = c_data.astype(np.float32)
+
 
 # Convert data to tensor because tf.GradientTape() can only watch tensor and not numpy arrays
-x_train = tf.expand_dims(tf.convert_to_tensor(x_train), -1)
-t_train = tf.expand_dims(tf.convert_to_tensor(t_train), -1)
-c_data_train = tf.convert_to_tensor(c_train)
+x_tf = tf.expand_dims(tf.convert_to_tensor(x_data), -1)
+t_tf = tf.expand_dims(tf.convert_to_tensor(t_data), -1)
+c_tf = tf.convert_to_tensor(c_data)
 
 # tf differentiation variables
-tt = tf.Variable(t_train)
-xx = tf.Variable(x_train)
+tt = tf.Variable(t_tf)
+xx = tf.Variable(x_tf)
 
 # model inputs
-inputs = [xx, tt, c_data_train]
+inputs = [xx, tt, c_tf]
 
 # additional variables added to gradient tracking
 p = p[:3]
@@ -142,7 +148,7 @@ def custom_loss(inputs, model):
     del tape
 
     # Compute the components of loss function
-    norm_weight = x_data.max()[0]**2 / (tf.multiply(beta0,d)) # normalization factor
+    norm_weight = x_data.max()**2 / (tf.multiply(beta0,d)) # normalization factor
     pde_loss = tf.reduce_mean(tf.multiply(norm_weight, (
         (tf.multiply(beta0, c_t) + div_output) ** 2 
         ))) # PDE loss
@@ -258,7 +264,7 @@ plt.grid()
 plt.show()
 
 # Plot the solutions
-solutions = model([t_train, x_train])
+solutions = model([t_data, x_data])
 sol_c = solutions[:, 0]
 
 sol_c_ = tf.reshape(sol_c, [t_data.shape[0], x_data.shape[0]])
