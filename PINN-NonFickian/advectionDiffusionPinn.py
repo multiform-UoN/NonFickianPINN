@@ -34,7 +34,7 @@ learning_rate = 1e-3   # learning rate for the network weights
 # correction of the learning rate for the parameters
 learning_rate_param = 0 # learning rate for the parameters
 
-epochs = 2000          # number of epochs
+epochs = 20          # number of epochs
 num_hidden_layers = 10 # number of hidden layers (depth of the network)
 num_neurons = 100      # max number of neurons per layer (width of the network)
 def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the depth of the network)
@@ -76,6 +76,8 @@ c_data = c_data * (1 + data_perturbation * np.random.randn(c_data.size).reshape(
 
 # convert data to numpy arrays and float32
 p = np.array(p).squeeze().astype(np.float32)
+x = x_data
+t = t_data
 x_data = Xgrid_data.astype(np.float32)
 t_data = Tgrid_data.astype(np.float32)
 c_data = c_data.astype(np.float32)
@@ -267,12 +269,12 @@ plt.show()
 solutions = model([t_data, x_data])
 sol_c = solutions[:, 0]
 
-sol_c_ = tf.reshape(sol_c, [t_data.shape[0], x_data.shape[0]])
-c_data_ = tf.reshape(c_data, [t_data.shape[0], x_data.shape[0]])
+sol_c_ = tf.reshape(sol_c, [nt, nx])
+c_data_ = tf.reshape(c_data, [nt, nx])
 # Plot solutions
 for i in range(sol_c_.shape[0]):
-    plt.plot(x_data, sol_c_[i, :],'k')#, label='c')
-    plt.plot(x_data, c_data_[i, :],'*r')#, label='c_data')
+    plt.plot(x, sol_c_[i, :],'k')#, label='c')
+    plt.plot(x, c_data_[i, :],'*r')#, label='c_data')
 plt.xlabel('x')
 plt.ylabel('fun')
 plt.title('Comparison')
