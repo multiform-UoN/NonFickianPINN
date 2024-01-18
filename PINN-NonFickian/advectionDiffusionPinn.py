@@ -22,27 +22,27 @@ tf.config.threading.set_inter_op_parallelism_threads(4)
 
 testcase = "testcase0" # Testcase (choose the one you want to run)
 
-pde_weight = 1.0      # penalty for the PDE
-data_weight = 0.0     # penalty for the data fitting
-ic_weight = 1e3     # penalty for the initial condition
-bc_weight = 1e2     # penalty for the boundary condition
+pde_weight = 1.      # penalty for the PDE
+data_weight = 0.     # penalty for the data fitting
+ic_weight = 10.    # penalty for the initial condition
+bc_weight = 10.     # penalty for the boundary condition
 
-learning_rate = 1e-3   # learning rate for the network weights
+learning_rate = 1e-2   # learning rate for the network weights
 # learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([10, 100], [1e-2, .5e-2, .1e-2])  #OK
 # learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([100, 300], [1e-3, 1e-4, .5e-4])
 
 # correction of the learning rate for the parameters
 learning_rate_param = 0 # learning rate for the parameters
 
-epochs = 20          # number of epochs
-num_hidden_layers = 10 # number of hidden layers (depth of the network)
-num_neurons = 100      # max number of neurons per layer (width of the network)
+epochs = 5000          # number of epochs
+num_hidden_layers = 8 # number of hidden layers (depth of the network)
+num_neurons = 20      # max number of neurons per layer (width of the network)
 def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the depth of the network)
     return num_neurons    # constant number of neurons
     # return np.floor(num_neurons*(np.exp(-(depth-0.5)**2 * np.log(num_neurons/2.1)/((0.5)**2))))  # Gaussian distribution of neurons
 activation = 'tanh' # 'sigmoid' or 'tanh'
 
-train_parameters = False # train the parameters or not
+train_parameters = True # train the parameters or not
 param_perturbation = 0;#5e-1 # perturbation for the parameters
 data_perturbation = 0;#5e-1 # perturbation for the data
 
@@ -96,11 +96,11 @@ xx = tf.Variable(x_tf)
 inputs = [xx, tt, c_tf]
 
 # additional variables added to gradient tracking
-p = p[:3]
 randp =  (p * (param_perturbation * np.random.randn(p.size) + 1)).astype(np.float32)
-beta0 = tf.Variable([randp[0]], trainable=train_parameters)
+beta0 = tf.Variable([randp[0]], trainable=False)
 d = tf.Variable([randp[1]], trainable=train_parameters)
-u = tf.Variable([randp[2]], trainable=train_parameters)
+u = tf.Variable([randp[2]], trainable=False)
+np = 1 # number of parameters to train
 
 #%%
 # Define the PINN model
@@ -121,10 +121,8 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
                                         #  kernel_regularizer=l1_l2(l1=0.01, l2=0.01)
                                          )(output_c)
     
-    # # output layer
-    # output_c = tf.keras.layers.Dense(1,
-    #                                 activation=None  # to check
-    #                                 )(output_c)
+    # output layer
+    output_c = tf.keras.layers.Dense(1)(output_c)
 
     return keras.Model(inputs=[t_input, x_input], outputs=output_c)
 
@@ -162,7 +160,7 @@ def custom_loss(inputs, model):
                             + (c_x[(nx-1)::nx]) ** 2) # neumann zero
     data_fitting_loss = data_c_fitting_loss
     ic_fitting_loss = tf.reduce_mean((c_model[0:nt] - c_data[0:nt])  ** 2)
-    loss = pde_weight*pde_loss + data_weight*data_fitting_loss + ic_weight*ic_fitting_loss + bc_weight*bc_fitting_loss
+    loss = (pde_weight*pde_loss + data_weight*data_fitting_loss + ic_weight*ic_fitting_loss + bc_weight*bc_fitting_loss) / (pde_weight + data_weight + ic_weight + bc_weight)
 
 
     return loss, pde_loss, data_fitting_loss, ic_fitting_loss, bc_fitting_loss
@@ -172,8 +170,8 @@ def custom_loss(inputs, model):
 model = pinn_model()
 trainable = model.trainable_variables
 if train_parameters:
-    trainable.append(beta0)
-    trainable.append(u)
+    # trainable.append(beta0)
+    # trainable.append(u)
     trainable.append(d)
 
 
@@ -209,7 +207,7 @@ for epoch in range(epochs):
         
         # scale the gradients wrt to the parameters
         if (train_parameters):
-            for i in range(-len(p), 0):
+            for i in range(-np, 0):
                 gradients[i] *= learning_rate_param
 
         # Apply the gradients to update the weights
@@ -227,6 +225,10 @@ for epoch in range(epochs):
             d_values.append(d.numpy())
             print(f"Epoch {epoch + 1}/{epochs}, Loss: {loss.numpy()}")
             print(f"beta0={beta0.numpy()}, d={d.numpy()}, u={u.numpy()} ")
+        
+        if epoch == 2000:
+            data_weight = 1.
+            learning_rate_param = 0.1
 
         # # Check if the loss is not decreasing anymore
         # if len(losses) > 2 and (np.abs(losses[-1] - losses[-2]))/np.abs(losses[-2]) < 1e-8:
@@ -271,10 +273,22 @@ sol_c = solutions[:, 0]
 
 sol_c_ = tf.reshape(sol_c, [nt, nx])
 c_data_ = tf.reshape(c_data, [nt, nx])
-# Plot solutions
+
+# Plot solutions in space
 for i in range(sol_c_.shape[0]):
     plt.plot(x, sol_c_[i, :],'k')#, label='c')
     plt.plot(x, c_data_[i, :],'*r')#, label='c_data')
+plt.xlabel('x')
+plt.ylabel('fun')
+plt.title('Comparison')
+plt.legend()
+plt.grid()
+plt.show()
+
+# Plot solutions in time
+for i in range(sol_c_.shape[1]):
+    plt.plot(t, sol_c_[:,i],'k')#, label='c')
+    plt.plot(t, c_data_[:,i],'*r')#, label='c_data')
 plt.xlabel('x')
 plt.ylabel('fun')
 plt.title('Comparison')
