@@ -36,7 +36,7 @@ epochs = 5000          # number of epochs
 learning_rate = 1e-2   # learning rate for the network weights
 # Piecewise constant learning rate every Y epochs decayed by X
 learning_rate_decay_factor = 0.9 # decay factor for the learning rate
-learning_rate_step = 100
+learning_rate_step = 200
 learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([learning_rate_step*(i+1) for i in range(int(epoch/learning_rate_step))],[learning_rate*learning_rate_decay_factor**i for i in range(int(epoch/learning_rate_step)+1)])
 
 ## NN architecture
@@ -49,7 +49,7 @@ activation = 'tanh' # 'sigmoid' or 'tanh'
 
 ## Parameters
 train_parameters = True # train the parameters or not
-param_perturbation = 0;#5e-1 # perturbation for the parameters
+param_perturbation = 5e-1 # perturbation for the parameters
 learning_rate_param = 1e-3 # correction factor for the learning rate of the parameters
 train_parameters_epoch = 1000 # epoch after which train the parameters
 
@@ -293,6 +293,8 @@ plt.show()
 
 # Plot the parameters over time
 plt.plot(param_values[:,0], label='d')
+# plot a line representing the true parameter value
+plt.plot(np.ones(epochs)*p[1]*randp[0], '--k', label='true value')
 plt.xlabel('Epoch')
 plt.ylabel('Parameter value')
 plt.title('Parameters over time')
