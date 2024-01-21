@@ -21,12 +21,12 @@ import os
 #############################
 
 ## general parameters
-tol = 1e-6 # tolerance for stopping training
+tol = 1e-8 # tolerance for stopping training
 
 ## Data and test case
 testcase = "testcase0" # Testcase (choose the one you want to run)
 coarsen_data = 1 # coarsening of the data (1 = no coarsening, >1 = coarsening skipping points)
-data_perturbation = 2e-2 # perturbation for the data
+data_perturbation = 0e-2 # perturbation for the data
 
 ## Loss function weights (will be normalised afterwards)
 pde_weight = 1.      # penalty for the PDE
@@ -35,7 +35,7 @@ ic_weight = 10.    # penalty for the initial condition
 bc_weight = 10.     # penalty for the boundary condition
 
 # NN training parameters
-epochs = 10000          # number of epochs
+epochs = 5000          # number of epochs
 epoch_print = 10      # print the loss every epoch_print epochs
 learning_rate = 1e-2   # learning rate for the network weights
 # Piecewise constant learning rate every Y epochs decayed by X
@@ -306,7 +306,7 @@ plt.show()
 # Plot the parameters over time
 plt.plot(param_values[:epoch,0], label='d')
 # plot a line representing the true parameter value
-plt.plot(np.ones(epochs)*p[1]*randp[0], '--k', label='true value')
+plt.plot(np.ones(epoch)*p[1]*randp[0], '--k', label='true value')
 plt.xlabel('Epoch')
 plt.ylabel('Parameter value')
 plt.title('Parameters over time')
