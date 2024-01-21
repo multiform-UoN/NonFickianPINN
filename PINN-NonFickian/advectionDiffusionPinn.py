@@ -20,10 +20,13 @@ import os
 # USER INPUTS
 #############################
 
+## general parameters
+tol = 1e-6 # tolerance for stopping training
+
 ## Data and test case
 testcase = "testcase0" # Testcase (choose the one you want to run)
 coarsen_data = 1 # coarsening of the data (1 = no coarsening, >1 = coarsening skipping points)
-data_perturbation = 0;#5e-1 # perturbation for the data
+data_perturbation = 2e-2 # perturbation for the data
 
 ## Loss function weights (will be normalised afterwards)
 pde_weight = 1.      # penalty for the PDE
@@ -32,12 +35,13 @@ ic_weight = 10.    # penalty for the initial condition
 bc_weight = 10.     # penalty for the boundary condition
 
 # NN training parameters
-epochs = 5000          # number of epochs
+epochs = 10000          # number of epochs
+epoch_print = 10      # print the loss every epoch_print epochs
 learning_rate = 1e-2   # learning rate for the network weights
 # Piecewise constant learning rate every Y epochs decayed by X
 learning_rate_decay_factor = 0.9 # decay factor for the learning rate
 learning_rate_step = 200
-learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([learning_rate_step*(i+1) for i in range(int(epoch/learning_rate_step))],[learning_rate*learning_rate_decay_factor**i for i in range(int(epoch/learning_rate_step)+1)])
+learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay([learning_rate_step*(i+1) for i in range(int(epochs/learning_rate_step))],[learning_rate*learning_rate_decay_factor**i for i in range(int(epochs/learning_rate_step)+1)])
 
 ## NN architecture
 num_hidden_layers = 8 # number of hidden layers (depth of the network)
@@ -51,7 +55,7 @@ activation = 'tanh' # 'sigmoid' or 'tanh'
 train_parameters = True # train the parameters or not
 param_perturbation = 5e-1 # perturbation for the parameters
 learning_rate_param = 1e-3 # correction factor for the learning rate of the parameters
-train_parameters_epoch = 1000 # epoch after which train the parameters
+train_parameters_epoch = 100 # epoch after which train the parameters
 
 
 #%%
@@ -65,15 +69,21 @@ if not os.path.exists(datafolder):
     datafolder = "data/"+testcase
 
 # Load data as pandas dataframes
-p = pd.read_csv(f'{datafolder}/p.csv', header=None)
-x_grid = pd.read_csv(f'{datafolder}/x.csv', header=None)
-t_grid = pd.read_csv(f'{datafolder}/t.csv', header=None)
-c_data = pd.read_csv(f'{datafolder}/c.csv', header=None)
+p = pd.read_csv(f'{datafolder}/p.csv', header=None, dtype=np.float32)
+x_grid = pd.read_csv(f'{datafolder}/x.csv', header=None, dtype=np.float32)
+t_grid = pd.read_csv(f'{datafolder}/t.csv', header=None, dtype=np.float32)
+c_data = pd.read_csv(f'{datafolder}/c.csv', header=None, dtype=np.float32)
 nt = np.shape(t_grid)[0]
 nx = np.shape(x_grid)[0]
+
+# perturb data randomly
+# c_data = c_data + data_perturbation * np.random.randn(c_data.size).reshape(c_data.shape) # additive noise
+c_data = c_data * (1 + data_perturbation * np.random.randn(c_data.size).reshape(c_data.shape)) # multiplicative noise
+
+# reshape data
 c_data_2d = np.reshape(c_data, (nt, nx))
 
-# Flatten the coarsened array
+# Coarsen data
 if coarsen_data>1:
     x_grid = pd.concat([x_grid[:-1-(nx+1)%coarsen_data:coarsen_data],x_grid.iloc[-1]])
     t_grid = pd.concat([t_grid[:-1-(nt+1)%coarsen_data:coarsen_data],t_grid.iloc[-1]])
@@ -87,10 +97,6 @@ if coarsen_data>1:
 nt = np.shape(t_grid)[0]
 nx = np.shape(x_grid)[0]
 Xgrid, Tgrid = np.meshgrid(x_grid, t_grid)
-
-# perturb data randomly
-# c_data = c_data + data_perturbation * np.random.randn(c_data.size).reshape(c_data.shape) # additive noise
-c_data = c_data * (1 + data_perturbation * np.random.randn(c_data.size).reshape(c_data.shape)) # multiplicative noise
 
 # convert data to numpy arrays and float32
 p = np.array(p).squeeze().astype(np.float32)
@@ -111,10 +117,10 @@ xx = tf.Variable(x_tf)
 inputs = [xx, tt, c_tf]
 
 # additional variables added to gradient tracking
-randp =  (p * (param_perturbation * np.random.randn(p.size) + 1)).astype(np.float32)
-beta0 = tf.Variable([randp[0]], trainable=False)
-d = tf.Variable([randp[1]], trainable=train_parameters)
-u = tf.Variable([randp[2]], trainable=False)
+randp =  (p * (param_perturbation * np.random.randn(p.size) + 1)).astype(np.float32) # perturb parameters randomly
+beta0 = tf.Variable([randp[0]], trainable=False) # porosity
+d = tf.Variable([randp[1]], trainable=train_parameters) # diffusion coefficient
+u = tf.Variable([randp[2]], trainable=False)  # advection velocity
 nparam = 1 # number of parameters to train
 
 #%%
@@ -141,15 +147,12 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
 
     return keras.Model(inputs=[t_input, x_input], outputs=output_c)
 
-@tf.function
-def custom_loss(inputs, model, weights):
+@tf.function(reduce_retracing=True)
+def custom_loss(inputs, model):
 
     # inputs
     xx, tt, cc = inputs
 
-    # weights
-    pde_weight, data_weight, ic_weight, bc_weight = weights
-    
     # Compute derivatives:
     with tf.GradientTape(persistent=True) as tape:
         tape.watch(tt)
@@ -174,10 +177,7 @@ def custom_loss(inputs, model, weights):
                             + (c_x[(nx-1)::nx]) ** 2) # neumann zero
     ic_fitting_loss = tf.reduce_mean((c_model[0:nt] - cc[0:nt])  ** 2) # initial condition based on data
     
-    # Compute the total loss divided by the total weights
-    loss = (pde_weight*pde_loss + data_weight*data_fitting_loss + ic_weight*ic_fitting_loss + bc_weight*bc_fitting_loss) / (pde_weight + data_weight + ic_weight + bc_weight)
-
-    return loss, pde_loss, data_fitting_loss, ic_fitting_loss, bc_fitting_loss
+    return [pde_loss, data_fitting_loss, ic_fitting_loss, bc_fitting_loss]
 
 
 # Create the PINN model
@@ -197,7 +197,7 @@ if train_parameters:
 optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate,epsilon=1e-08,amsgrad=True)
 
 # some lists to save the losses and parameters
-losses = np.zeros((epochs, 5))
+losses = np.zeros((epochs, 9))
 param_values = np.zeros((epochs, nparam))
 
 # Start loop and timer
@@ -206,32 +206,44 @@ t0 = time()
 
 # Epoch loop
 for epoch in range(epochs):
-    if not stop:
-        # Compute the gradients
-        with tf.GradientTape() as tape:
-            # Call the tf decorated loss function
-            loss = custom_loss(inputs, model, [pde_weight, data_weight*(epoch>train_parameters_epoch), ic_weight, bc_weight])
-            gradients = tape.gradient(loss, trainable)
-        
-        # scale the gradients wrt to the parameters
-        if (train_parameters):
-            for i in range(-nparam, 0):
-                gradients[i] *= learning_rate_param*(epoch>train_parameters_epoch)
+    # compute factor for training the parameters and weighing the data
+    # param_data_factor = (epoch>train_parameters_epoch)
+    param_data_factor = np.exp(-np.log(train_parameters_epoch)*(epochs-epoch)/epochs).item()
+    weights = [pde_weight, data_weight*param_data_factor, ic_weight, bc_weight]
+    # normalise the weights
+    weights = [w/sum(weights) for w in weights]
+    
+    # Compute the gradients
+    with tf.GradientTape() as tape:
+        # Call the tf decorated loss function and weight each loss term
+        loss0 = custom_loss(inputs, model)
+        loss = [l * w for l, w in zip(loss0, weights)]
+        # Append the total loss
+        loss.append(sum(loss))
+        gradients = tape.gradient(loss[-1], trainable)
+    
+    # scale the gradients wrt to the parameters
+    if (train_parameters):
+        for i in range(-nparam, 0):
+            gradients[i] *= learning_rate_param*param_data_factor
 
-        # Apply the gradients to update the weights
-        optimizer.apply_gradients(zip(gradients, trainable))
+    # Apply the gradients to update the weights
+    optimizer.apply_gradients(zip(gradients, trainable))
 
-        # Save the losses parameters and outputs to screen
-        if epoch % 1 == 0:
-            losses[epoch,:] = np.array(loss)
-            param_values[epoch,0] = d.numpy()
-            print(f"Epoch {epoch + 1}/{epochs}, Loss: {loss[0].numpy()}")
-            print(f"pde_loss={loss[1].numpy()}, data_fitting_loss={loss[2].numpy()}, ic_fitting_loss={loss[3].numpy()}, bc_fitting_loss={loss[4].numpy()} ")                  
-            print(f"beta0={beta0.numpy()}, d={d.numpy()}, u={u.numpy()} ")
-        
-        # # Check if the loss is not decreasing anymore
-        # if len(losses) > 2 and (np.abs(losses[-1] - losses[-2]))/np.abs(losses[-2]) < 1e-8:
-        #     stop = True
+    # store losses (unweighted and weighted)
+    losses[epoch,:] = np.array(loss0+loss)
+    # store parameter values
+    param_values[epoch,0] = d.numpy()
+
+    # outputs to screen
+    if epoch % epoch_print == 0:
+        print(f"Epoch {epoch + 1}/{epochs}, Loss: {loss[-1].numpy()}")
+        print(f"beta0={beta0.numpy()}, d={d.numpy()}, u={u.numpy()} ")
+    
+    # Check if the loss and the parameters are not decreasing more than a tolerance from the previous epoch
+    if epoch > 100 and np.abs(losses[epoch,-1] - losses[epoch-1,-1]) < tol*losses[0,-1] and np.abs(param_values[epoch,0] - param_values[epoch-1,0]) < tol*param_values[0,0]:   
+        print('Loss is not decreasing anymore. Stopping training.')
+        break
 
 # Print computation time
 print('\nComputation time: {} seconds'.format(time() - t0))
@@ -240,31 +252,31 @@ print('\nComputation time: {} seconds'.format(time() - t0))
 # Plottings
 #############################
 
-# Plot the loss history (relative)
-plt.semilogy(losses[:,0]/losses[0,0], label='Total Loss')
-plt.semilogy(losses[:,1]/losses[0,1], label='PDE Loss')
-plt.semilogy(losses[:,2]/losses[0,2], label='Data Fitting Loss')
-plt.semilogy(losses[:,3]/losses[0,3], label='IC Fitting Loss')
-plt.semilogy(losses[:,4]/losses[0,4], label='BC Fitting Loss')
+# Plot the loss history (absolute)
+plt.semilogy(losses[:epoch,0], label='PDE')
+plt.semilogy(losses[:epoch,1], label='Data')
+plt.semilogy(losses[:epoch,2], label='IC')
+plt.semilogy(losses[:epoch,3], label='BC')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
-plt.title('Normalised Loss Function')
+plt.title('Unweighted Loss Function')
 plt.legend()
 plt.grid()
 plt.show()
 
-# Plot the loss history (absolute)
-plt.semilogy(losses[:,0], label='Total Loss')
-plt.semilogy(losses[:,1], label='PDE Loss')
-plt.semilogy(losses[:,2], label='Data Fitting Loss')
-plt.semilogy(losses[:,3], label='IC Fitting Loss')
-plt.semilogy(losses[:,4], label='BC Fitting Loss')
+# Plot the loss history (weighted)
+plt.semilogy(losses[:epoch,4], label='PDE')
+plt.semilogy(losses[:epoch,5], label='Data')
+plt.semilogy(losses[:epoch,6], label='IC')
+plt.semilogy(losses[:epoch,7], label='BC')
+plt.semilogy(losses[:epoch,8], label='Total')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
-plt.title('Absolute Loss Function')
+plt.title('Weighted Loss Function')
 plt.legend()
 plt.grid()
 plt.show()
+
 
 # Plot the solutions
 sol = model([t_data, x_data]).numpy().reshape(nt, nx)
@@ -292,7 +304,7 @@ plt.grid()
 plt.show()
 
 # Plot the parameters over time
-plt.plot(param_values[:,0], label='d')
+plt.plot(param_values[:epoch,0], label='d')
 # plot a line representing the true parameter value
 plt.plot(np.ones(epochs)*p[1]*randp[0], '--k', label='true value')
 plt.xlabel('Epoch')
