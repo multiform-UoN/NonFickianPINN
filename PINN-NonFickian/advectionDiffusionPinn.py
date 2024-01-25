@@ -24,14 +24,14 @@ import os
 tol = 1e-8 # tolerance for stopping training
 
 ## Data and test case
-testcase = "testcase0" # Testcase (choose the one you want to run)
+testcase = "testcase4" # Testcase (choose the one you want to run)
 coarsen_data = 1 # coarsening of the data (1 = no coarsening, >1 = coarsening skipping points)
 data_perturbation = 0e-2 # perturbation for the data
 
 
 ## Parameters
 train_parameters = True # train the parameters or not
-nparam = 1 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
+nparam = 2 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
 param_perturbation = 10 # perturbation for the parameters - factor for random perturbation of the parameters
 learning_rate_param = 1e-2 # learning rate of the parameters
 train_parameters_epoch = 1000 # epoch after which train the parameters
@@ -43,23 +43,23 @@ ic_weight = 10.    # penalty for the initial condition
 bc_weight = 10.     # penalty for the boundary condition
 
 # NN training parameters
-epochs = 20000          # number of epochs
+epochs = 5000          # number of epochs
 epoch_print = 10      # print the loss every epoch_print epochs
 
 learning_rate = 1e-2   # learning rate for the network weights
-learning_rate_decay_factor = 0.5 # decay factor for the learning rate
-learning_rate_step = train_parameters_epoch
-# # Piecewise constant learning rate every Y epochs decayed by X
-# learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay(
-#     [learning_rate_step*(i+1) for i in range(int(epochs/learning_rate_step))],
-#     [learning_rate*learning_rate_decay_factor**i for i in range(int(epochs/learning_rate_step)+1)])
-# smooth exponential decay
-learning_rate = tf.keras.optimizers.schedules.ExponentialDecay(
-    learning_rate,
-    decay_steps=learning_rate_step,
-    decay_rate=learning_rate_decay_factor,
-    staircase=False)
-# polynomial decay
+learning_rate_decay_factor = 0.95 # decay factor for the learning rate
+learning_rate_step = 100
+# Piecewise constant learning rate every Y epochs decayed by X
+learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay(
+    [learning_rate_step*(i+1) for i in range(int(epochs/learning_rate_step))],
+    [learning_rate*learning_rate_decay_factor**i for i in range(int(epochs/learning_rate_step)+1)])
+# # smooth exponential decay
+# learning_rate = tf.keras.optimizers.schedules.ExponentialDecay(
+#     learning_rate,
+#     decay_steps=learning_rate_step,
+#     decay_rate=learning_rate_decay_factor,
+#     staircase=False)
+# # polynomial decay
 # learning_rate = tf.keras.optimizers.schedules.PolynomialDecay(
 #     learning_rate,
 #     decay_steps=learning_rate_step,  # Adjust the decay steps as needed
@@ -260,16 +260,27 @@ for epoch in range(epochs):
     # hessian = tape.gradient(gradients[-nparam:], trainable[-nparam:])
     del tape
     
-    # Apply the gradients to update the weights
-    optimizer.apply_gradients(zip(gradients[:-nparam], trainable[:-nparam]))
-    
-    # Manually apply gradients to the parameters
     if (train_parameters):
         param_grads[epoch,:] = np.array(gradients[-nparam:]).squeeze()/weights[0] # store parameter gradients
+    
         # param_hessian[epoch,:] = np.array(hessian[-1])/weights[0] # store parameter hessian
-        for i in range(nparam):
-            params[i].assign_sub(gradients[-nparam+i]*learning_rate_param*param_data_factor)
+    
+        # # Manually apply gradients to the parameters
+        # for i in range(nparam):
+        #     params[i].assign_sub(gradients[-nparam+i]*learning_rate_param*param_data_factor)
+        
+        # scale the parameter gradients
+        for i in range(-nparam,0):
+            gradients[i] *= learning_rate_param*param_data_factor
+            print(i)
+            print(gradients[-i].shape)        
+    
+    # # Apply the gradients to update the weights
+    # optimizer.apply_gradients(zip(gradients[:-nparam], trainable[:-nparam]))
 
+    # Apply all the gradients
+    optimizer.apply_gradients(zip(gradients, trainable))
+    
     # store losses (unweighted and weighted concatenated)
     losses[epoch,:] = np.array(loss0+loss) 
     # store parameter values
