@@ -2,6 +2,7 @@
 % This script solves the multirate model
 % Matteo Icardi, 2023
 
+writeData = 0
 
 % %% Testcase 1
 % datafolder = "../data/testcase1/";
@@ -15,7 +16,7 @@
 
 
 
-% %% Testcase 0
+% %% Testcase 0 % Pure Diffusion
 % datafolder = "../data/testcase0/";
 % beta = 1;
 % D = 1;
@@ -26,15 +27,26 @@
 % nx = 100;
 
 
-%% Testcase 2
-datafolder = "../data/testcase2/";
-beta = .5;
+%% Testcase 4 % Advection Diffusion
+datafolder = "../data/testcase4/";
+beta = 1;
 D = 1;
 V = 1;
-betak = .5;
-lambdak = -100;
-nt = 10;
-nx = 10;
+betak = 0;
+lambdak = 0;
+nt = 50;
+nx = 50;
+
+
+% %% Testcase 2
+% datafolder = "../data/testcase2/";
+% beta = .5;
+% D = 1;
+% V = 1;
+% betak = .5;
+% lambdak = -100;
+% nt = 10;
+% nx = 10;
 
 %% Problem set-up
 L = 1;
@@ -77,7 +89,7 @@ colormap;
 loglog(t,1-u(L),'DisplayName',num2str(lambdak))
 legend
 hold on
-figure
+figure(2)
 % waterfall(u, t)
 plot(u(:),'k')
 xlabel('x'), ylabel('t'), title('u,v')
@@ -92,20 +104,22 @@ uu = u(xx');
 vv = v(xx');
 
 %% Write parameters to file
-parameters = [beta; D; V; betak; lambdak];
-filename = fullfile(datafolder, 'p.csv');
-% Create the folder if it does not exist
-if ~exist(datafolder, 'dir')
-    mkdir(datafolder);
+if writeData
+    parameters = [beta; D; V; betak; lambdak];
+    filename = fullfile(datafolder, 'p.csv');
+    % Create the folder if it does not exist
+    if ~exist(datafolder, 'dir')
+        mkdir(datafolder);
+    end
+    dlmwrite(filename, parameters, 'delimiter', ',', 'precision', '%.6f');
+    
+    %% Write solution vectors to CSV
+    x_file_name = fullfile(datafolder, 'x.csv');
+    t_file_name = fullfile(datafolder, 't.csv');
+    uu_file_name = fullfile(datafolder, 'c.csv');
+    vv_file_name = fullfile(datafolder, 'c1.csv');
+    dlmwrite(x_file_name, xx', 'delimiter', ',', 'precision', '%.6f');
+    dlmwrite(t_file_name, t, 'delimiter', ',', 'precision', '%.6f');
+    dlmwrite(uu_file_name, uu(:), 'delimiter', ',', 'precision', '%.6f');
+    dlmwrite(vv_file_name, vv(:), 'delimiter', ',', 'precision', '%.6f');
 end
-dlmwrite(filename, parameters, 'delimiter', ',', 'precision', '%.6f');
-
-%% Write solution vectors to CSV
-x_file_name = fullfile(datafolder, 'x.csv');
-t_file_name = fullfile(datafolder, 't.csv');
-uu_file_name = fullfile(datafolder, 'c.csv');
-vv_file_name = fullfile(datafolder, 'c1.csv');
-dlmwrite(x_file_name, xx', 'delimiter', ',', 'precision', '%.6f');
-dlmwrite(t_file_name, t, 'delimiter', ',', 'precision', '%.6f');
-dlmwrite(uu_file_name, uu(:), 'delimiter', ',', 'precision', '%.6f');
-dlmwrite(vv_file_name, vv(:), 'delimiter', ',', 'precision', '%.6f');
