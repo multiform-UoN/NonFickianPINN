@@ -2,7 +2,7 @@
 % This script solves the multirate model
 % Matteo Icardi, 2023
 
-writeData = 0
+writeData = 1
 
 % %% Testcase 1
 % datafolder = "../data/testcase1/";
@@ -13,7 +13,8 @@ writeData = 0
 % lambdak = -10;
 % nt = 100;
 % nx = 100;
-
+% omega = 0; % BC coeff
+% gamma = 0; % BC coeff
 
 
 % %% Testcase 0 % Pure Diffusion
@@ -25,18 +26,32 @@ writeData = 0
 % lambdak = 0;
 % nt = 50;
 % nx = 100;
-
+% omega = 0; % BC coeff
+% gamma = 0; % BC coeff
 
 %% Testcase 4 % Advection Diffusion
-datafolder = "../data/testcase4/";
+% datafolder = "../data/testcase5/";
+% beta = 1;
+% D = 0.1;
+% V = 1;
+% betak = 0;
+% lambdak = 0;
+% nt = 50;
+% nx = 50;
+% omega = 0; % BC coeff
+% gamma = 0; % BC coeff
+
+%% Testcase 5 % Advection Diffusion B
+datafolder = "../data/testcase5/";
 beta = 1;
-D = 1;
+D = 0.01;
 V = 1;
 betak = 0;
 lambdak = 0;
 nt = 50;
-nx = 50;
-
+nx = 100;
+omega = 0; % BC coeff
+gamma = 10; % BC coeff
 
 % %% Testcase 2
 % datafolder = "../data/testcase2/";
@@ -47,6 +62,8 @@ nx = 50;
 % lambdak = -100;
 % nt = 10;
 % nx = 10;
+% omega = 0; % BC coeff
+% gamma = 0; % BC coeff
 
 %% Problem set-up
 L = 1;
@@ -58,18 +75,14 @@ xx = 0:L/nx:L;
 t = 0:T/nt:T;
 x = chebfun(@(x) x, dom);
 
-%% boundary conditions.
-bc.left = @(t,u,v) [u-1];
-bc.right = @(t,u,v) [diff(u)];
-
 %% initial conditions.
 u0 = 1-tanh(x*10);
 v0 = 0.*x;
-sol0 = [u0, v0];
+sol0 = [u0, v0]
 
 %% Time dependent initial conditions
-omega = 0;
-bc.left = @(t,u,v) [u-abs(cos(omega*2*pi*t))];
+bc.left = @(t,u,v) [u-abs(cos(omega*2*pi*t))*exp(-gamma*t)];
+bc.right = @(t,u,v) [diff(u)];
 
 %% Make the right-hand side of the PDE.
 pdefun = @(t,x,u,v) [ ...

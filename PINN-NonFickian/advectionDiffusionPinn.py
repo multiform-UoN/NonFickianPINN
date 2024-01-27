@@ -24,21 +24,21 @@ import os
 tol = 1e-8 # tolerance for stopping training
 
 ## Data and test case
-testcase = "testcase4" # Testcase (choose the one you want to run)
+testcase = "testcase0" # Testcase (choose the one you want to run)
 coarsen_data = 1 # coarsening of the data (1 = no coarsening, >1 = coarsening skipping points)
 data_perturbation = 0e-2 # perturbation for the data
 
 
 ## Parameters
-train_parameters = True # train the parameters or not
+train_parameters = False # train the parameters or not
 nparam = 2 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
-param_perturbation = 10 # perturbation for the parameters - factor for random perturbation of the parameters
+param_perturbation = 1 # perturbation for the parameters - factor for random perturbation of the parameters
 learning_rate_param = 1e-2 # learning rate of the parameters
 train_parameters_epoch = 1000 # epoch after which train the parameters
 
 ## Loss function weights (will be normalised afterwards)
 pde_weight = 1.      # penalty for the PDE
-data_weight = 1.     # penalty for the data fitting (will be multiplied by param_data_factor)
+data_weight = 0.     # penalty for the data fitting (will be multiplied by param_data_factor)
 ic_weight = 10.    # penalty for the initial condition
 bc_weight = 10.     # penalty for the boundary condition
 
@@ -50,17 +50,17 @@ learning_rate = 1e-2   # learning rate for the network weights
 learning_rate_decay_factor = 0.95 # decay factor for the learning rate
 learning_rate_step = 100
 # Piecewise constant learning rate every Y epochs decayed by X
-learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay(
+learning_rate = keras.optimizers.schedules.PiecewiseConstantDecay(
     [learning_rate_step*(i+1) for i in range(int(epochs/learning_rate_step))],
     [learning_rate*learning_rate_decay_factor**i for i in range(int(epochs/learning_rate_step)+1)])
 # # smooth exponential decay
-# learning_rate = tf.keras.optimizers.schedules.ExponentialDecay(
+# learning_rate = keras.optimizers.schedules.ExponentialDecay(
 #     learning_rate,
 #     decay_steps=learning_rate_step,
 #     decay_rate=learning_rate_decay_factor,
 #     staircase=False)
 # # polynomial decay
-# learning_rate = tf.keras.optimizers.schedules.PolynomialDecay(
+# learning_rate = keras.optimizers.schedules.PolynomialDecay(
 #     learning_rate,
 #     decay_steps=learning_rate_step,  # Adjust the decay steps as needed
 #     end_learning_rate=learning_rate*1e-3,
@@ -147,6 +147,7 @@ params0 = [p[1], p[2], p[0]] # true parameters
 # Define the PINN model and loss functions
 #############################
 
+# NN model
 def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_neurons_per_layer):
     x_input = keras.Input(shape=(1,))
     t_input = keras.Input(shape=(1,))
@@ -155,7 +156,7 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
     
     # hidden layers
     for i in range(num_hidden_layers):
-        output_c = tf.keras.layers.Dense(num_neurons_per_layer((i+1)/num_hidden_layers),
+        output_c = layers.Dense(num_neurons_per_layer((i+1)/num_hidden_layers),
                                          activation=activation,  
                                         #  kernel_constraint=NonNeg(), # this gives trivial constant fitting
                                          kernel_initializer='glorot_normal',
@@ -163,7 +164,32 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
                                          )(output_c)
     
     # output layer
-    output_c = tf.keras.layers.Dense(1)(output_c)
+    output_c = layers.Dense(1)(output_c)
+
+    return keras.Model(inputs=[t_input, x_input], outputs=output_c)
+
+# CNN model
+def pinn_model_cnn(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_neurons_per_layer):
+    x_input = keras.Input(shape=(1,))
+    t_input = keras.Input(shape=(1,))
+
+    # Concatenate along a new axis to make it compatible with 1D convolution
+    output_c = layers.concatenate([t_input[:, :, None], x_input[:, :, None]], axis=-1)
+
+    # Convolutional layers
+    for i in range(num_hidden_layers):
+        output_c = layers.Conv1D(filters=num_neurons_per_layer((i+1)/num_hidden_layers),
+                                         kernel_size=3,  # Adjust the filter (kernel) size as needed
+                                         activation=activation,
+                                         padding='same',  # 'same' padding ensures the output has the same length as input
+                                         kernel_initializer='glorot_normal'
+                                         )(output_c)
+
+    # Global average pooling to reduce spatial dimensions
+    output_c = layers.GlobalAveragePooling1D()(output_c)
+
+    # Output layer
+    output_c = layers.Dense(1)(output_c)
 
     return keras.Model(inputs=[t_input, x_input], outputs=output_c)
 
@@ -215,7 +241,7 @@ if train_parameters:
 #############################
 
 # Create the optimizer with a smaller learning rate
-optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate,epsilon=1e-08,amsgrad=True)
+optimizer = keras.optimizers.legacy.Adam(learning_rate=learning_rate,epsilon=1e-08,amsgrad=True)
 
 # some lists to save the losses and parameters
 losses = np.zeros((epochs, 9))
@@ -272,8 +298,7 @@ for epoch in range(epochs):
         # scale the parameter gradients
         for i in range(-nparam,0):
             gradients[i] *= learning_rate_param*param_data_factor
-            print(i)
-            print(gradients[-i].shape)        
+            # print(i)
     
     # # Apply the gradients to update the weights
     # optimizer.apply_gradients(zip(gradients[:-nparam], trainable[:-nparam]))
@@ -289,7 +314,7 @@ for epoch in range(epochs):
     # outputs to screen
     if epoch % epoch_print == 0:
         print(f"\nEpoch {epoch + 1}/{epochs}, Loss: {loss[-1].numpy()}")
-        print(f"param_data_factor = {param_data_factor:.2e} beta0 = {beta0.numpy()[0]}, d = {d.numpy()[0]}, u = {u.numpy()[0]} ")
+        print(f"param_data_factor = {param_data_factor:.2e} beta0 = {beta0.numpy()[0]:.4e}, d = {d.numpy()[0]:.4e}, u = {u.numpy()[0]:.4e} ")
         # print('CPU time for {} epochs: {} seconds'.format(epoch_print,time() - t1))
         # t1 = time()
     
