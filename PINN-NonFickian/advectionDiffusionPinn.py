@@ -24,7 +24,7 @@ import os
 tol = 1e-8 # tolerance for stopping training
 
 ## Data and test case
-testcase = "testcase0" # Testcase (choose the one you want to run)
+testcase = "testcase5" # Testcase (choose the one you want to run)
 coarsen_data = 1 # coarsening of the data (1 = no coarsening, >1 = coarsening skipping points)
 data_perturbation = 0e-2 # perturbation for the data
 
@@ -68,12 +68,12 @@ learning_rate = keras.optimizers.schedules.PiecewiseConstantDecay(
 #     cycle=False)
 
 ## NN architecture
-num_hidden_layers = 8 # number of hidden layers (depth of the network)
+num_hidden_layers = 10 # number of hidden layers (depth of the network)
 num_neurons = 20      # max number of neurons per layer (width of the network)
 def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the depth of the network)
     return num_neurons    # constant number of neurons
     # return np.floor(num_neurons*(np.exp(-(depth-0.5)**2 * np.log(num_neurons/2.1)/((0.5)**2))))  # Gaussian distribution of neurons
-activation = 'tanh' # 'sigmoid' or 'tanh'
+activation = 'tanh' # 'sigmoid' or 'tanh' or 'relu' or 'elu' or 'selu' or 'softplus' or 'softsign' or 'exponential' or 'linear'
 
 
 
@@ -214,7 +214,7 @@ def custom_loss(inputs, model):
     del tape
 
     # Compute the components of loss function
-    norm_weight = x_data.max()**2 / (tf.multiply(beta0,d)) # normalization factor for the PDE
+    norm_weight = 1.0 #x_data.max()**2 / (tf.multiply(beta0,d)) # normalization factor for the PDE
     pde_loss = tf.reduce_mean(tf.multiply(norm_weight, (
         (tf.multiply(beta0, c_t) + div_output) ** 2 
         ))) # PDE loss

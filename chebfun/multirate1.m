@@ -41,11 +41,23 @@ writeData = 1
 % omega = 0; % BC coeff
 % gamma = 0; % BC coeff
 
-%% Testcase 5 % Advection Diffusion B
-datafolder = "../data/testcase5/";
+%% Testcase 5 % Advection Diffusion (high Peclet)
+% datafolder = "../data/testcase5/";
+% beta = 1;
+% D = 0.01;
+% V = 1;
+% betak = 0;
+% lambdak = 0;
+% nt = 50;
+% nx = 100;
+% omega = 0; % BC coeff
+% gamma = 10; % BC coeff
+
+%% Testcase 5 % Diffusion (time dependent BC)
+datafolder = "../data/testcase6/";
 beta = 1;
-D = 0.01;
-V = 1;
+D = 1;
+V = 0;
 betak = 0;
 lambdak = 0;
 nt = 50;
