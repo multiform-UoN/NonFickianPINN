@@ -340,12 +340,12 @@ plt.ylabel('Loss')
 plt.title('Unweighted Loss Function')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid()
-plt.show()
 if save_fig:
     # save png
     plt.savefig('../results/'+testcase+'_unweighted_loss.png', dpi=300)
     # save pdf
     plt.savefig('../results/'+testcase+'_unweighted_loss.pdf', dpi=300)
+plt.show()
 
 # Plot the loss history (weighted)
 plt.semilogy(losses[:epoch,4], '.', label='PDE')
@@ -358,12 +358,12 @@ plt.ylabel('Loss')
 plt.title('Weighted Loss Function')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid()
-plt.show()
 if save_fig:
     # save png
     plt.savefig('../results/'+testcase+'_weighted_loss.png', dpi=300)
     # save pdf
     plt.savefig('../results/'+testcase+'_weighted_loss.pdf', dpi=300)
+plt.show()
 
 # Plot the solutions
 sol = model([t_data, x_data]).numpy().reshape(nt, nx)
@@ -377,13 +377,13 @@ plt.ylabel('u')
 plt.title('Concentration vs space')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid()
-plt.show()
 if save_fig:
     # save png
     plt.savefig('../results/'+testcase+'_ux.png', dpi=300)
     # save pdf
     plt.savefig('../results/'+testcase+'_ux.pdf', dpi=300)
-    
+plt.show()
+
 # Plot solutions in time
 for i in range(0, nx, 5):
     plt.plot(t_grid, sol[:,i], 'k-', label='PINN' if i == 0 else '')
@@ -393,12 +393,12 @@ plt.ylabel('u')
 plt.title('Concentration vs time')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid()
-plt.show()
 if save_fig:
     # save png
     plt.savefig('../results/'+testcase+'_ut.png', dpi=300)
     # save pdf
     plt.savefig('../results/'+testcase+'_ut.pdf', dpi=300)
+plt.show()
     
 
 # Plot the parameters over time
@@ -411,12 +411,12 @@ plt.ylabel('Parameter value')
 plt.title('Parameters over time')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid()
-plt.show()
 if save_fig:
     # save png
     plt.savefig('../results/'+testcase+'_param.png', dpi=300)
     # save pdf
     plt.savefig('../results/'+testcase+'_param.pdf', dpi=300)
+plt.show()
 
 
 # Plot the parameter gradients over time
@@ -427,12 +427,12 @@ plt.ylabel('Parameter gradients')
 plt.title('Parameter gradients over time')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid()
-plt.show()
 if save_fig:
     # save png
     plt.savefig('../results/'+testcase+'_param_grads.png', dpi=300)
     # save pdf
     plt.savefig('../results/'+testcase+'_param_grads.pdf', dpi=300)
+plt.show()
 
 
 # %%
