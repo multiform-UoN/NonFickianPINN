@@ -7,16 +7,17 @@ writeData = 0;
 
 %% Testcase Richards
 datafolder = "../data/richards/";
-A = 1e6;
-Ks = 1e-2;
-B = 1e6;
+A = 1;
+Ks = 1;
+B = 1;
 alpha = 4;
-us=0.01; % head corresponding to saturated condition
-ur=0.4; % head corresponding to residual saturation
-beta = @(u) B*(alpha*(100*(u+us)).^(alpha-1))./(B+(100*(u+us)).^alpha).^2;
-D = @(u) Ks*A./(A+(100*(u+us)).^alpha);
-DD = @(u) -Ks*A.*(alpha*(100*(u+us)).^(alpha-1))./(A+(100*(u+us)).^alpha).^2;
-V = 5e4;
+gamma = 10;
+us=0.1; % head corresponding to saturated condition
+ur=0.8; % head corresponding to residual saturation
+beta = @(u) B*(alpha*gamma*(gamma*(u+us)).^(alpha-1))./(B+(gamma*(u+us)).^alpha).^2;
+D = @(u) Ks*A./(A+(gamma*(u+us)).^alpha);
+DD = @(u) -Ks*A.*(alpha*gamma*(gamma*(u+us)).^(alpha-1))./(A+(gamma*(u+us)).^alpha).^2;
+V = 1;
 betak = 0;
 lambdak = 0;
 nt = 50;
