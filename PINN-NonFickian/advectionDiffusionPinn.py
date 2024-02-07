@@ -420,8 +420,9 @@ plt.show()
 
 
 # Plot the parameter gradients over time
-plt.semilogy(abs(param_grads[:epoch,0]), '.', label=r'$p_{{{}}}$'.format(i))
-# plt.semilogy(abs(param_hessian[:epoch,0]), '*', label='d Hessian')
+for i in range(nparam):
+    plt.semilogy(abs(param_grads[:epoch,0]), '.', label=r'$p_{{{}}}$'.format(i))
+    # plt.semilogy(abs(param_hessian[:epoch,0]), '*', label='d Hessian')
 plt.xlabel('Epoch')
 plt.ylabel('Parameter gradients')
 plt.title('Parameter gradients over time')
