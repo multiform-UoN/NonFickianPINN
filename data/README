@@ -1,14 +1,38 @@
+### Non-Fickian PINN
+This file is to list the working parameters to run the chebfun testcases.
+The parameters used for the chebfun cases can be seen in the `chebfun` folder, multirate1.m file, or in each folder in the p.csv file which is structured as follows:
+```
+porosity
+diffusion_coefficient
+advection_coefficient
+mobile_immobile_ratio
+exchange_rate
+```
+
 ### testcase0
 # pure diffusion
+Here all works, PINN and inverse PINN
+see file results/testcase0.py
+
+### testcase4
+# advection diffusion Pe=1
+work in progress
+
+### testcase5
+# advection diffusion Pe=100
+work in progress
 
 
-
-
+### testcase6
+# pure diffusion with time-dependent BC
+work in progress
 
 
 ### testcase1
 # advection diffusion with mobile-immobile
 # 100x100 data points
+inverse PINN does not work, PINN seemed to work with the following parameters
+```python
 pde_weight = 1.0
 data_weight = 1.0
 ic_weight = 100.0
@@ -18,7 +42,9 @@ epochs = 400
 train_parameters = False
 num_hidden_layers = 20
 num_neurons_per_layer = 40
+```
 
 ### testcase2
 # advection diffusion with mobile-immobile
 # fewer data points (10,10)
+TBD

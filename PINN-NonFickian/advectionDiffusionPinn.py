@@ -25,15 +25,15 @@ tol = 1e-8 # tolerance for stopping training
 save_fig = False # save figures or not
 
 ## Data and test case
-testcase = "testcase0" # Testcase (choose the one you want to run)
+testcase = "testcase5" # Testcase (choose the one you want to run)
 coarsen_data = 1 # coarsening of the data (1 = no coarsening, >1 = coarsening skipping points)
 data_perturbation = 0e-2 # perturbation for the data
 
 ## Parameters
 train_parameters = True # train the parameters or not
-nparam = 1 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
+nparam = 2 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
 param_perturbation = 10 # perturbation for the parameters - factor for random perturbation of the parameters # 1 no perturbation, 10 means factor 10
-learning_rate_param = 1e-2 # learning rate of the parameters
+learning_rate_param = 1e-1 # learning rate of the parameters
 train_parameters_epoch = 1000 # epoch after which train the parameters
 
 ## Loss function weights (will be normalised afterwards)
@@ -43,7 +43,7 @@ ic_weight = 10.    # penalty for the initial condition
 bc_weight = 10.     # penalty for the boundary condition
 
 # NN training parameters
-epochs = 5000          # number of epochs
+epochs = 10000          # number of epochs
 epoch_print = 10      # print the loss every epoch_print epochs
 
 learning_rate = 1e-2   # learning rate for the network weights
