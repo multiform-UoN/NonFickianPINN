@@ -25,7 +25,7 @@ tol = 1e-8 # tolerance for stopping training
 save_fig = False # save figures or not
 
 ## Data and test case
-testcase = "testcase5" # Testcase (choose the one you want to run)
+testcase = "testcase4" # Testcase (choose the one you want to run)
 coarsen_data = 1 # coarsening of the data (1 = no coarsening, >1 = coarsening skipping points)
 data_perturbation = 0e-2 # perturbation for the data
 
@@ -33,7 +33,7 @@ data_perturbation = 0e-2 # perturbation for the data
 train_parameters = True # train the parameters or not
 nparam = 2 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
 param_perturbation = 10 # perturbation for the parameters - factor for random perturbation of the parameters # 1 no perturbation, 10 means factor 10
-learning_rate_param = 1e-1 # learning rate of the parameters
+learning_rate_param = .5e-1 # learning rate of the parameters
 train_parameters_epoch = 1000 # epoch after which train the parameters
 
 ## Loss function weights (will be normalised afterwards)
@@ -68,7 +68,7 @@ learning_rate = keras.optimizers.schedules.PiecewiseConstantDecay(
 #     cycle=False)
 
 ## NN architecture
-num_hidden_layers = 8 # number of hidden layers (depth of the network) # 8 for diffusion, 10+ for advection
+num_hidden_layers = 12 # number of hidden layers (depth of the network) # 8 for diffusion, 10+ for advection
 num_neurons = 20      # max number of neurons per layer (width of the network)
 def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the depth of the network)
     return num_neurons    # constant number of neurons
@@ -131,9 +131,6 @@ c_tf = tf.convert_to_tensor(c_data)
 # tf differentiation variables
 tt = tf.Variable(t_tf)
 xx = tf.Variable(x_tf)
-
-# model inputs
-inputs = [xx, tt, c_tf]
 
 # additional variables added to gradient tracking
 randp =  (p * param_perturbation**(np.random.rand(p.size)*2 -1 )).astype(np.float32) # perturb parameters randomly
@@ -241,7 +238,7 @@ if train_parameters:
 #############################
 
 # Create the optimizer with a smaller learning rate
-optimizer = keras.optimizers.legacy.Adam(learning_rate=learning_rate,epsilon=1e-08,amsgrad=True)
+optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
 
 # some lists to save the losses and parameters
 losses = np.zeros((epochs, 9))
@@ -256,6 +253,7 @@ t1 = t0
 
 # Epoch loop
 for epoch in range(epochs):
+    lr = learning_rate(epoch)
     # compute factor for training the parameters and weighing the data
     
     # exponential transition from 0 to 1
@@ -278,7 +276,7 @@ for epoch in range(epochs):
     # Compute the gradients
     with tf.GradientTape(persistent=True) as tape:
         # Call the tf decorated loss function
-        loss0 = custom_loss(inputs, model) # unweighted loss terms
+        loss0 = custom_loss([xx, tt, c_tf], model) # unweighted loss terms
         loss = [l * w for l, w in zip(loss0, weights)] # weight the losses
         # Append the total loss
         loss.append(sum(loss)) # weighted total loss
@@ -304,7 +302,9 @@ for epoch in range(epochs):
     # optimizer.apply_gradients(zip(gradients[:-nparam], trainable[:-nparam]))
 
     # Apply all the gradients
-    optimizer.apply_gradients(zip(gradients, trainable))
+    # Manually apply gradients
+    for grad, var in zip(gradients, trainable):
+        var.assign_sub(grad * lr) # Update the variable by subtracting the scaled gradient
     
     # store losses (unweighted and weighted concatenated)
     losses[epoch,:] = np.array(loss0+loss) 
