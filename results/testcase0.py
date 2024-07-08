@@ -168,31 +168,6 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
 
     return keras.Model(inputs=[t_input, x_input], outputs=output_c)
 
-# CNN model
-def pinn_model_cnn(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_neurons_per_layer):
-    x_input = keras.Input(shape=(1,))
-    t_input = keras.Input(shape=(1,))
-
-    # Concatenate along a new axis to make it compatible with 1D convolution
-    output_c = layers.concatenate([t_input[:, :, None], x_input[:, :, None]], axis=-1)
-
-    # Convolutional layers
-    for i in range(num_hidden_layers):
-        output_c = layers.Conv1D(filters=num_neurons_per_layer((i+1)/num_hidden_layers),
-                                         kernel_size=3,  # Adjust the filter (kernel) size as needed
-                                         activation=activation,
-                                         padding='same',  # 'same' padding ensures the output has the same length as input
-                                         kernel_initializer='glorot_normal'
-                                         )(output_c)
-
-    # Global average pooling to reduce spatial dimensions
-    output_c = layers.GlobalAveragePooling1D()(output_c)
-
-    # Output layer
-    output_c = layers.Dense(1)(output_c)
-
-    return keras.Model(inputs=[t_input, x_input], outputs=output_c)
-
 @tf.function(reduce_retracing=True)
 def custom_loss(inputs, model):
 

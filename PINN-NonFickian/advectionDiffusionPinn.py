@@ -25,13 +25,13 @@ tol = 1e-8 # tolerance for stopping training
 save_fig = False # save figures or not
 
 ## Data and test case
-testcase = "testcase4" # Testcase (choose the one you want to run)
+testcase = "testcase0" # Testcase (choose the one you want to run)
 coarsen_data = 1 # coarsening of the data (1 = no coarsening, >1 = coarsening skipping points)
 data_perturbation = 0e-2 # perturbation for the data
 
 ## Parameters
 train_parameters = True # train the parameters or not
-nparam = 2 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
+nparam = 1 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
 param_perturbation = 10 # perturbation for the parameters - factor for random perturbation of the parameters # 1 no perturbation, 10 means factor 10
 learning_rate_param = .5e-1 # learning rate of the parameters
 train_parameters_epoch = 1000 # epoch after which train the parameters
@@ -68,8 +68,8 @@ learning_rate = keras.optimizers.schedules.PiecewiseConstantDecay(
 #     cycle=False)
 
 ## NN architecture
-num_hidden_layers = 12 # number of hidden layers (depth of the network) # 8 for diffusion, 10+ for advection
-num_neurons = 20      # max number of neurons per layer (width of the network)
+num_hidden_layers = 4 # number of hidden layers (depth of the network) # 8 for diffusion, 10+ for advection
+num_neurons = 10      # max number of neurons per layer (width of the network)
 def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the depth of the network)
     return num_neurons    # constant number of neurons
     # return np.floor(num_neurons*(np.exp(-(depth-0.5)**2 * np.log(num_neurons/2.1)/((0.5)**2))))  # Gaussian distribution of neurons
@@ -134,9 +134,9 @@ xx = tf.Variable(x_tf)
 
 # additional variables added to gradient tracking
 randp =  (p * param_perturbation**(np.random.rand(p.size)*2 -1 )).astype(np.float32) # perturb parameters randomly
-d = tf.Variable([randp[1]], trainable=train_parameters) # diffusion coefficient
-u = tf.Variable([randp[2]], trainable=(train_parameters and nparam>1))  # advection velocity
-beta0 = tf.Variable([randp[0]], trainable=(train_parameters and nparam>2))  # porosity
+d = keras.Variable([randp[1]], trainable=train_parameters) # diffusion coefficient
+u = keras.Variable([randp[2]], trainable=(train_parameters and nparam>1))  # advection velocity
+beta0 = keras.Variable([randp[0]], trainable=(train_parameters and nparam>2))  # porosity
 params = [d, u, beta0]
 params0 = [p[1], p[2], p[0]] # true parameters
 
@@ -161,31 +161,6 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
                                          )(output_c)
     
     # output layer
-    output_c = layers.Dense(1)(output_c)
-
-    return keras.Model(inputs=[t_input, x_input], outputs=output_c)
-
-# CNN model
-def pinn_model_cnn(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_neurons_per_layer):
-    x_input = keras.Input(shape=(1,))
-    t_input = keras.Input(shape=(1,))
-
-    # Concatenate along a new axis to make it compatible with 1D convolution
-    output_c = layers.concatenate([t_input[:, :, None], x_input[:, :, None]], axis=-1)
-
-    # Convolutional layers
-    for i in range(num_hidden_layers):
-        output_c = layers.Conv1D(filters=num_neurons_per_layer((i+1)/num_hidden_layers),
-                                         kernel_size=3,  # Adjust the filter (kernel) size as needed
-                                         activation=activation,
-                                         padding='same',  # 'same' padding ensures the output has the same length as input
-                                         kernel_initializer='glorot_normal'
-                                         )(output_c)
-
-    # Global average pooling to reduce spatial dimensions
-    output_c = layers.GlobalAveragePooling1D()(output_c)
-
-    # Output layer
     output_c = layers.Dense(1)(output_c)
 
     return keras.Model(inputs=[t_input, x_input], outputs=output_c)
@@ -288,23 +263,14 @@ for epoch in range(epochs):
         param_grads[epoch,:] = np.array(gradients[-nparam:]).squeeze()/weights[0] # store parameter gradients
     
         # param_hessian[epoch,:] = np.array(hessian[-1])/weights[0] # store parameter hessian
-    
-        # # Manually apply gradients to the parameters
-        # for i in range(nparam):
-        #     params[i].assign_sub(gradients[-nparam+i]*learning_rate_param*param_data_factor)
-        
+            
         # scale the parameter gradients
         for i in range(-nparam,0):
             gradients[i] *= learning_rate_param*param_data_factor
             # print(i)
     
-    # # Apply the gradients to update the weights
-    # optimizer.apply_gradients(zip(gradients[:-nparam], trainable[:-nparam]))
-
     # Apply all the gradients
-    # Manually apply gradients
-    for grad, var in zip(gradients, trainable):
-        var.assign_sub(grad * lr) # Update the variable by subtracting the scaled gradient
+    optimizer.apply_gradients(zip(gradients, trainable))    
     
     # store losses (unweighted and weighted concatenated)
     losses[epoch,:] = np.array(loss0+loss) 
