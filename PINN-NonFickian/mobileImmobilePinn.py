@@ -22,7 +22,7 @@ import os
 
 ## general parameters
 tol = 1e-8 # tolerance for stopping training
-save_fig = True # save figures or not
+save_fig = False # save figures or not
 
 ## Data and test case
 testcase = "testcase5" # Testcase (choose the one you want to run)
@@ -38,7 +38,7 @@ train_parameters_epoch = 1000 # epoch after which train the parameters
 
 ## Loss function weights (will be normalised afterwards)
 pde_weight = 1.      # penalty for the PDE
-data_weight = 2.     # penalty for the data fitting (will be multiplied by param_data_factor)
+data_weight = 1.     # penalty for the data fitting (will be multiplied by param_data_factor)
 ic_weight = 10.    # penalty for the initial condition
 bc_weight = 10.     # penalty for the boundary condition
 
@@ -47,7 +47,7 @@ epochs = 10000          # number of epochs
 epoch_print = 10      # print the loss every epoch_print epochs
 
 learning_rate = 1e-2   # learning rate for the network weights
-learning_rate_decay_factor = 0.98 # decay factor for the learning rate
+learning_rate_decay_factor = 0.96 # decay factor for the learning rate
 learning_rate_step = 100
 # Piecewise constant learning rate every Y epochs decayed by X
 learning_rate = keras.optimizers.schedules.PiecewiseConstantDecay(
@@ -92,15 +92,18 @@ p = pd.read_csv(f'{datafolder}/p.csv', header=None, dtype=np.float32)
 x_grid = pd.read_csv(f'{datafolder}/x.csv', header=None, dtype=np.float32)
 t_grid = pd.read_csv(f'{datafolder}/t.csv', header=None, dtype=np.float32)
 c_data = pd.read_csv(f'{datafolder}/c.csv', header=None, dtype=np.float32)
+c1_data = pd.read_csv(f'{datafolder}/c1.csv', header=None, dtype=np.float32)
 nt = np.shape(t_grid)[0]
 nx = np.shape(x_grid)[0]
 
 # perturb data randomly
 # c_data = c_data + data_perturbation * np.random.randn(c_data.size).reshape(c_data.shape) # additive noise
 c_data = c_data * (1 + data_perturbation * np.random.randn(c_data.size).reshape(c_data.shape)) # multiplicative noise
+c1_data = c1_data * (1 + data_perturbation * np.random.randn(c1_data.size).reshape(c1_data.shape)) # multiplicative noise
 
 # reshape data
 c_data_2d = np.reshape(c_data, (nt, nx))
+c1_data_2d = np.reshape(c1_data, (nt, nx))
 
 # Coarsen data
 if coarsen_data>1:
@@ -111,6 +114,9 @@ if coarsen_data>1:
     c_data_2d = c_data_2d[rows[:, None], cols]
     # c_data_2d = c_data_2d[::coarsen_data, ::coarsen_data]
     c_data = c_data_2d.flatten()
+    c1_data_2d = c1_data_2d[rows[:, None], cols]
+    # c1_data_2d = c1_data_2d[::coarsen_data, ::coarsen_data]
+    c1_data = c1_data_2d.flatten()
 
 # mesh and time discretization
 nt = np.shape(t_grid)[0]
@@ -122,11 +128,13 @@ p = np.array(p).squeeze().astype(np.float32)
 x_data = Xgrid.flatten().astype(np.float32)
 t_data = Tgrid.flatten().astype(np.float32)
 c_data = c_data.astype(np.float32)
+c1_data = c1_data.astype(np.float32)
 
 # Convert data to tensor because tf.GradientTape() can only watch tensor and not numpy arrays
 x_tf = tf.expand_dims(tf.convert_to_tensor(x_data), -1)
 t_tf = tf.expand_dims(tf.convert_to_tensor(t_data), -1)
 c_tf = tf.convert_to_tensor(c_data)
+c1_tf = tf.convert_to_tensor(c1_data)
 
 # tf differentiation variables
 tt = tf.Variable(t_tf)
@@ -136,9 +144,11 @@ xx = tf.Variable(x_tf)
 randp =  (p * param_perturbation**(np.random.rand(p.size)*2 -1 )).astype(np.float32) # perturb parameters randomly
 d = keras.Variable([randp[1]], trainable=train_parameters) # diffusion coefficient
 u = keras.Variable([randp[2]], trainable=(train_parameters and nparam>1))  # advection velocity
-beta0 = keras.Variable([randp[0]], trainable=(train_parameters and nparam>2))  # porosity
-params = [d, u, beta0]
-params0 = [p[1], p[2], p[0]] # true parameters
+beta0 = keras.Variable([randp[0]], trainable=False)  # porosity
+beta1 = keras.Variable([randp[3]], trainable=(train_parameters and nparam>2))  # immobile porosity
+lambda1 = keras.Variable([randp[4]], trainable=(train_parameters and nparam>3))  # immobile porosity
+params = [d, u, beta0, beta1, lambda1]
+params0 = [p[1], p[2], p[0], p[3], p[4]] # true parameters
 
 #%%
 # Define the PINN model and loss functions
@@ -161,7 +171,7 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
                                          )(output_c)
     
     # output layer
-    output_c = layers.Dense(1)(output_c)
+    output_c = layers.Dense(2)(output_c)
 
     return keras.Model(inputs=[t_input, x_input], outputs=output_c)
 
@@ -169,7 +179,7 @@ def pinn_model(num_hidden_layers=num_hidden_layers, num_neurons_per_layer=num_ne
 def custom_loss(inputs, model):
 
     # inputs
-    xx, tt, cc = inputs
+    xx, tt, cc, cc1 = inputs
 
     # Compute derivatives:
     with tf.GradientTape(persistent=True) as tape:
@@ -179,21 +189,26 @@ def custom_loss(inputs, model):
         output_model = model([tt, xx])
         c_model = output_model[:, 0]
         c_model = tf.expand_dims(c_model, -1)
+        c1_model = output_model[:, 1]
+        c1_model = tf.expand_dims(c1_model, -1)
         # derivatives and fluxes
         c_x = tape.gradient(c_model, xx)
         c_t = tape.gradient(c_model, tt)
+        c1_t = tape.gradient(c1_model, tt)
     div_output = u * c_x - d * tape.gradient(c_x, xx)
     del tape
 
     # Compute the components of loss function
     norm_weight = 1.0 #x_data.max()**2 / (tf.multiply(beta0,d)) # normalization factor for the PDE
     pde_loss = tf.reduce_mean(tf.multiply(norm_weight, (
-        (tf.multiply(beta0, c_t) + div_output) ** 2 
+        (tf.multiply(beta0, c_t) + div_output + tf.multiply(tf.multiply(beta1, lambda1), c1_model - c_model)) ** 2  + (c1_t - tf.multiply(lambda1, c1_model - c_model)) ** 2
         ))) # PDE loss
-    data_fitting_loss = tf.reduce_mean((c_model - cc) ** 2) # data misfit
+    data_fitting_loss = tf.reduce_mean((c_model - cc) ** 2) + tf.reduce_mean((c1_model - cc1) ** 2) # data misfit
     bc_fitting_loss = tf.reduce_mean((c_model[::nx] - cc[::nx]) ** 2 # dirichlet based on data
                             + (c_x[(nx-1)::nx]) ** 2) # neumann zero
-    ic_fitting_loss = tf.reduce_mean((c_model[0:nt] - cc[0:nt])  ** 2) # initial condition based on data
+    ic_fitting_loss = tf.reduce_mean((c_model[0:nt] - cc[0:nt])  ** 2
+                                     + (c1_model[0:nt] - cc1[0:nt]) ** 2
+                                     ) # initial condition based on data
     
     return [pde_loss, data_fitting_loss, ic_fitting_loss, bc_fitting_loss]
 
@@ -259,7 +274,7 @@ for epoch in range(epochs):
     # Compute the gradients
     with tf.GradientTape(persistent=True) as tape:
         # Call the tf decorated loss function
-        loss0 = custom_loss([xx, tt, c_tf], model) # unweighted loss terms
+        loss0 = custom_loss([xx, tt, c_tf, c1_tf], model) # unweighted loss terms
         loss = [l * w for l, w in zip(loss0, weights)] # weight the losses
         # Append the total loss
         loss.append(sum(loss)) # weighted total loss
@@ -288,8 +303,8 @@ for epoch in range(epochs):
     
     # outputs to screen
     if epoch % epoch_print == 0:
-        print(f"\nEpoch {epoch + 1}/{epochs}, Loss: {loss[-1].numpy():.2e}, lr: {lr:.2e}")
-        print(f"param_data_factor = {param_data_factor:.2e} beta0 = {beta0.numpy()[0]:.4e}, d = {d.numpy()[0]:.4e}, u = {u.numpy()[0]:.4e} ")
+        print(f"\nEpoch {epoch + 1}/{epochs}, Loss: {loss[-1].numpy():.4e}, lr: {lr:.4e}")
+        print(f"param_data_factor = {param_data_factor:.2e} beta0 = {beta0.numpy()[0]:.4e}, d = {d.numpy()[0]:.4e}, u = {u.numpy()[0]:.4e}, beta1 = {beta1.numpy()[0]:.4e}, lambda1 = {lambda1.numpy()[0]:.4e}")
         # print('CPU time for {} epochs: {} seconds'.format(epoch_print,time() - t1))
         # t1 = time()
     
@@ -341,7 +356,9 @@ if save_fig:
 plt.show()
 
 # Plot the solutions
-sol = model([t_data, x_data]).numpy().reshape(nt, nx)
+sol12 = model([t_tf, x_tf]).numpy().reshape(nt, nx, 2)
+sol = sol12[:,:,0]
+sol1 = sol12[:,:,1]
 
 # Plot solutions in space
 for i in range(0, nt, 5):
@@ -359,6 +376,22 @@ if save_fig:
     plt.savefig('../results/'+testcase+'_ux.pdf', dpi=300)
 plt.show()
 
+# Plot c1 in space
+for i in range(0, nt, 5):
+    plt.plot(x_grid, sol1[i, :], 'k-', label='PINN' if i == 0 else '')
+    plt.plot(x_grid, c1_data_2d[i, :], 'b--', linewidth=3, dashes=(2, 5), label='Data' if i == 0 else '')
+plt.xlabel('x')
+plt.ylabel('u')
+plt.title('Concentration vs space')
+plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+plt.grid()
+if save_fig:
+    # save png
+    plt.savefig('../results/'+testcase+'_ux1.png', dpi=300)
+    # save pdf
+    plt.savefig('../results/'+testcase+'_ux1.pdf', dpi=300)
+plt.show()
+
 # Plot solutions in time
 for i in range(0, nx, 5):
     plt.plot(t_grid, sol[:,i], 'k-', label='PINN' if i == 0 else '')
@@ -373,6 +406,22 @@ if save_fig:
     plt.savefig('../results/'+testcase+'_ut.png', dpi=300)
     # save pdf
     plt.savefig('../results/'+testcase+'_ut.pdf', dpi=300)
+plt.show()
+
+# Plot c1 in time
+for i in range(0, nx, 5):
+    plt.plot(t_grid, sol1[:,i], 'k-', label='PINN' if i == 0 else '')
+    plt.plot(t_grid, c1_data_2d[:,i], 'b--', linewidth=3, dashes=(2, 5), label='Data' if i == 0 else '')
+plt.xlabel('t')
+plt.ylabel('u')
+plt.title('Concentration vs time')
+plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+plt.grid()
+if save_fig:
+    # save png
+    plt.savefig('../results/'+testcase+'_ut1.png', dpi=300)
+    # save pdf
+    plt.savefig('../results/'+testcase+'_ut1.pdf', dpi=300)
 plt.show()
     
 

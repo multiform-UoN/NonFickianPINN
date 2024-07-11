@@ -32,8 +32,8 @@ data_perturbation = 0e-2 # perturbation for the data
 ## Parameters
 train_parameters = True # train the parameters or not
 nparam = 1 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
-param_perturbation = 10 # perturbation for the parameters - factor for random perturbation of the parameters # 1 no perturbation, 10 means factor 10
-learning_rate_param = 1e-1 # learning rate of the parameters
+param_perturbation = 2 # perturbation for the parameters - factor for random perturbation of the parameters # 1 no perturbation, 10 means factor 10
+learning_rate_param = 2e-1 # learning rate of the parameters
 train_parameters_epoch = 1000 # epoch after which train the parameters
 
 ## Loss function weights (will be normalised afterwards)
@@ -132,14 +132,11 @@ c_tf = tf.convert_to_tensor(c_data)
 tt = tf.Variable(t_tf)
 xx = tf.Variable(x_tf)
 
-# model inputs
-inputs = [xx, tt, c_tf]
-
 # additional variables added to gradient tracking
 randp =  (p * param_perturbation**(np.random.rand(p.size)*2 -1 )).astype(np.float32) # perturb parameters randomly
-d = tf.Variable([randp[1]], trainable=train_parameters) # diffusion coefficient
-u = tf.Variable([randp[2]], trainable=(train_parameters and nparam>1))  # advection velocity
-beta0 = tf.Variable([randp[0]], trainable=(train_parameters and nparam>2))  # porosity
+d = keras.Variable([randp[1]], trainable=train_parameters) # diffusion coefficient
+u = keras.Variable([randp[2]], trainable=(train_parameters and nparam>1))  # advection velocity
+beta0 = keras.Variable([randp[0]], trainable=(train_parameters and nparam>2))  # porosity
 params = [d, u, beta0]
 params0 = [p[1], p[2], p[0]] # true parameters
 
@@ -216,7 +213,14 @@ if train_parameters:
 #############################
 
 # Create the optimizer with a smaller learning rate
-optimizer = keras.optimizers.legacy.Adam(learning_rate=learning_rate,epsilon=1e-08,amsgrad=True)
+optimizer = keras.optimizers.Adam(learning_rate=learning_rate,amsgrad=True)
+# or
+# optimizer = keras.optimizers.SGD(learning_rate=learning_rate)
+# optimizer = keras.optimizers.RMSprop(learning_rate=learning_rate)
+# optimizer = keras.optimizers.Adagrad(learning_rate=learning_rate)
+# optimizer = keras.optimizers.Adadelta(learning_rate=learning_rate)
+# optimizer = keras.optimizers.Adamax(learning_rate=learning_rate)
+# optimizer = keras.optimizers.Nadam(learning_rate=learning_rate)
 
 # some lists to save the losses and parameters
 losses = np.zeros((epochs, 9))
@@ -231,19 +235,21 @@ t1 = t0
 
 # Epoch loop
 for epoch in range(epochs):
+    lr = learning_rate(epoch)
     # compute factor for training the parameters and weighing the data
     
-    # exponential transition from 0 to 1
-    # param_data_factor = np.exp(-np.log(train_parameters_epoch)*(epochs-epoch)/epochs).item()
-    
-    # tanh transition from 0 to 1
-    param_data_factor = (np.tanh(10*(epoch-epochs/2-train_parameters_epoch)/epochs)+1)/2
-    
-    # # sigmoid transition from 0 to 1
-    # param_data_factor = 1/(1+np.exp(-10*(epoch-epochs/2-train_parameters_epoch)/epochs))
-    
-    # set the factor to exactly 0 for the first epochs
-    param_data_factor *= (epoch>train_parameters_epoch)
+    if train_parameters:
+        # exponential transition from 0 to 1
+        # param_data_factor = np.exp(-np.log(train_parameters_epoch)*(epochs-epoch)/epochs).item()
+        
+        # tanh transition from 0 to 1
+        param_data_factor = (np.tanh(10*(epoch-epochs/2-train_parameters_epoch)/epochs)+1)/2
+        
+        # # sigmoid transition from 0 to 1
+        # param_data_factor = 1/(1+np.exp(-10*(epoch-epochs/2-train_parameters_epoch)/epochs))
+        
+        # set the factor to exactly 0 for the first epochs
+        param_data_factor *= (epoch>train_parameters_epoch)
 
     # compute the adaptive weights
     weights = [pde_weight, data_weight*param_data_factor, ic_weight, bc_weight]
@@ -253,7 +259,7 @@ for epoch in range(epochs):
     # Compute the gradients
     with tf.GradientTape(persistent=True) as tape:
         # Call the tf decorated loss function
-        loss0 = custom_loss(inputs, model) # unweighted loss terms
+        loss0 = custom_loss([xx, tt, c_tf], model) # unweighted loss terms
         loss = [l * w for l, w in zip(loss0, weights)] # weight the losses
         # Append the total loss
         loss.append(sum(loss)) # weighted total loss
@@ -265,24 +271,18 @@ for epoch in range(epochs):
         param_grads[epoch,:] = np.array(gradients[-nparam:]).squeeze()/weights[0] # store parameter gradients
     
         # param_hessian[epoch,:] = np.array(hessian[-1])/weights[0] # store parameter hessian
-    
-        # # Manually apply gradients to the parameters
-        # for i in range(nparam):
-        #     params[i].assign_sub(gradients[-nparam+i]*learning_rate_param*param_data_factor)
-        
+            
         # scale the parameter gradients
         for i in range(-nparam,0):
             gradients[i] *= learning_rate_param*param_data_factor
             # print(i)
     
-    # # Apply the gradients to update the weights
-    # optimizer.apply_gradients(zip(gradients[:-nparam], trainable[:-nparam]))
-
     # Apply all the gradients
-    optimizer.apply_gradients(zip(gradients, trainable))
+    optimizer.apply_gradients(zip(gradients, trainable))    
     
     # store losses (unweighted and weighted concatenated)
-    losses[epoch,:] = np.array(loss0+loss) 
+    losses[epoch,:] = np.array(loss0+loss)
+    
     # store parameter values
     param_values[epoch,:] = np.array(params[:nparam]).squeeze()
     
