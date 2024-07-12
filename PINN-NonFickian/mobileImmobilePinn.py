@@ -21,20 +21,20 @@ import os
 #############################
 
 ## general parameters
-tol = 1e-8 # tolerance for stopping training
+tol = 1e-10 # tolerance for stopping training
 save_fig = False # save figures or not
 
 ## Data and test case
-testcase = "testcase5" # Testcase (choose the one you want to run)
+testcase = "testcase1" # Testcase (choose the one you want to run)
 coarsen_data = 1 # coarsening of the data (1 = no coarsening, >1 = coarsening skipping points)
 data_perturbation = 0e-2 # perturbation for the data
 
 ## Parameters
 train_parameters = True # train the parameters or not
-nparam = 2 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
+nparam = 4 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta1, 4=d,u,beta1 and lambda1
 param_perturbation = 2 # perturbation for the parameters - factor for random perturbation of the parameters # 1 no perturbation, 10 means factor 10
-learning_rate_param = 2e-1 # learning rate of the parameters
-train_parameters_epoch = 1000 # epoch after which train the parameters
+learning_rate_param = .2e-1 # learning rate of the parameters
+train_parameters_epoch = 2000 # epoch after which train the parameters
 
 ## Loss function weights (will be normalised afterwards)
 pde_weight = 1.      # penalty for the PDE
@@ -47,7 +47,7 @@ epochs = 10000          # number of epochs
 epoch_print = 10      # print the loss every epoch_print epochs
 
 learning_rate = 1e-2   # learning rate for the network weights
-learning_rate_decay_factor = 0.96 # decay factor for the learning rate
+learning_rate_decay_factor = 0.98 # decay factor for the learning rate
 learning_rate_step = 100
 # Piecewise constant learning rate every Y epochs decayed by X
 learning_rate = keras.optimizers.schedules.PiecewiseConstantDecay(
@@ -68,8 +68,8 @@ learning_rate = keras.optimizers.schedules.PiecewiseConstantDecay(
 #     cycle=False)
 
 ## NN architecture
-num_hidden_layers = 8 # number of hidden layers (depth of the network) # 8 for diffusion, 10+ for advection
-num_neurons = 20      # max number of neurons per layer (width of the network)
+num_hidden_layers = 10 # number of hidden layers (depth of the network) # 8 for diffusion, 10+ for advection
+num_neurons = 25      # max number of neurons per layer (width of the network)
 def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the depth of the network)
     return num_neurons    # constant number of neurons
     # return np.floor(num_neurons*(np.exp(-(depth-0.5)**2 * np.log(num_neurons/2.1)/((0.5)**2))))  # Gaussian distribution of neurons
@@ -144,12 +144,13 @@ xx = tf.Variable(x_tf)
 randp =  (p * param_perturbation**(np.random.rand(p.size)*2 -1 )).astype(np.float32) # perturb parameters randomly
 d = keras.Variable([randp[1]], trainable=train_parameters) # diffusion coefficient
 u = keras.Variable([randp[2]], trainable=(train_parameters and nparam>1))  # advection velocity
-beta0 = keras.Variable([randp[0]], trainable=False)  # porosity
+beta0 = p[0]  # porosity
 beta1 = keras.Variable([randp[3]], trainable=(train_parameters and nparam>2))  # immobile porosity
-lambda1 = keras.Variable([randp[4]], trainable=(train_parameters and nparam>3))  # immobile porosity
-params = [d, u, beta0, beta1, lambda1]
-params0 = [p[1], p[2], p[0], p[3], p[4]] # true parameters
+lambda1 = keras.Variable([-randp[4]], trainable=(train_parameters and nparam>3))  # immobile porosity
+params = [d, u, beta1, lambda1]
+params0 = [p[1], p[2], p[3], -p[4]] # true parameters
 
+print("Real parameters: d = {:.2e}, u = {:.2e}, beta1 = {:.2e}, lambda1 = {:.2e}".format(*params0))
 #%%
 # Define the PINN model and loss functions
 #############################
@@ -201,7 +202,7 @@ def custom_loss(inputs, model):
     # Compute the components of loss function
     norm_weight = 1.0 #x_data.max()**2 / (tf.multiply(beta0,d)) # normalization factor for the PDE
     pde_loss = tf.reduce_mean(tf.multiply(norm_weight, (
-        (tf.multiply(beta0, c_t) + div_output + tf.multiply(tf.multiply(beta1, lambda1), c1_model - c_model)) ** 2  + (c1_t - tf.multiply(lambda1, c1_model - c_model)) ** 2
+        (tf.multiply(beta0, c_t) + div_output - tf.multiply(tf.multiply(beta1, lambda1), c1_model - c_model)) ** 2  + (c1_t + tf.multiply(lambda1, c1_model - c_model)) ** 2
         ))) # PDE loss
     data_fitting_loss = tf.reduce_mean((c_model - cc) ** 2) + tf.reduce_mean((c1_model - cc1) ** 2) # data misfit
     bc_fitting_loss = tf.reduce_mean((c_model[::nx] - cc[::nx]) ** 2 # dirichlet based on data
@@ -265,6 +266,8 @@ for epoch in range(epochs):
         
         # set the factor to exactly 0 for the first epochs
         param_data_factor *= (epoch>train_parameters_epoch)
+    else:
+        param_data_factor = 1
 
     # compute the adaptive weights
     weights = [pde_weight, data_weight*param_data_factor, ic_weight, bc_weight]
@@ -293,8 +296,15 @@ for epoch in range(epochs):
             # print(i)
     
     # Apply all the gradients
-    optimizer.apply_gradients(zip(gradients, trainable))    
+    optimizer.apply_gradients(zip(gradients, trainable))
     
+    # if parameters become negative, reset them to the initial values
+    if train_parameters:
+        for i in range(nparam):
+            if params[i].numpy() < 0:
+                print("WARNING: Negative parameter value detected. Resetting to initial value.")
+                params[i].assign([params0[i]])
+                     
     # store losses (unweighted and weighted concatenated)
     losses[epoch,:] = np.array(loss0+loss)
     
@@ -303,8 +313,8 @@ for epoch in range(epochs):
     
     # outputs to screen
     if epoch % epoch_print == 0:
-        print(f"\nEpoch {epoch + 1}/{epochs}, Loss: {loss[-1].numpy():.4e}, lr: {lr:.4e}")
-        print(f"param_data_factor = {param_data_factor:.2e} beta0 = {beta0.numpy()[0]:.4e}, d = {d.numpy()[0]:.4e}, u = {u.numpy()[0]:.4e}, beta1 = {beta1.numpy()[0]:.4e}, lambda1 = {lambda1.numpy()[0]:.4e}")
+        print(f"\nEpoch {epoch + 1}/{epochs}, Loss: {loss[-1].numpy():.2e}, lr: {lr:.2e}")
+        print(f"param_data_factor = {param_data_factor:.2e} d = {d.numpy()[0]:.2e}, u = {u.numpy()[0]:.2e}, beta1 = {beta1.numpy()[0]:.2e}, lambda1 = {lambda1.numpy()[0]:.2e}")
         # print('CPU time for {} epochs: {} seconds'.format(epoch_print,time() - t1))
         # t1 = time()
     
@@ -429,7 +439,7 @@ plt.show()
 for i in range(nparam):
     plt.plot(param_values[:epoch,i], label=r'$p_{{{}}}$'.format(i))
     # plot a line representing the true parameter value
-    plt.plot(np.ones(epoch)*params0[i]*randp[0], '--k', label=r'$p_{{{}^\text{{ref}}}}$'.format(i))
+    plt.plot(np.ones(epoch)*params0[i], '--k', label=r'$p_{{{}^\text{{ref}}}}$'.format(i))
 plt.xlabel('Epoch')
 plt.ylabel('Parameter value')
 plt.title('Parameters over time')

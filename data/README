@@ -20,7 +20,8 @@ work in progress
 
 ### testcase5
 # advection diffusion Pe=100
-work in progress
+Kind of works, PINN and inverse PINN
+see file results/testcase5.py
 
 
 ### testcase6

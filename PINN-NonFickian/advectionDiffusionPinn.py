@@ -38,7 +38,7 @@ train_parameters_epoch = 1000 # epoch after which train the parameters
 
 ## Loss function weights (will be normalised afterwards)
 pde_weight = 1.      # penalty for the PDE
-data_weight = 2.     # penalty for the data fitting (will be multiplied by param_data_factor)
+data_weight = 1.     # penalty for the data fitting (will be multiplied by param_data_factor)
 ic_weight = 10.    # penalty for the initial condition
 bc_weight = 10.     # penalty for the boundary condition
 
@@ -250,6 +250,8 @@ for epoch in range(epochs):
         
         # set the factor to exactly 0 for the first epochs
         param_data_factor *= (epoch>train_parameters_epoch)
+    else:
+        param_data_factor = 1
 
     # compute the adaptive weights
     weights = [pde_weight, data_weight*param_data_factor, ic_weight, bc_weight]
