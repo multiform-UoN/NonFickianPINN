@@ -53,7 +53,7 @@ writeData = 1
 % omega = 0; % BC coeff
 % gamma = 10; % BC coeff
 
-%% Testcase 5 % Diffusion (time dependent BC)
+%% Testcase 6 % Diffusion (time dependent BC)
 datafolder = "../data/testcase6/";
 beta = 1;
 D = 1;

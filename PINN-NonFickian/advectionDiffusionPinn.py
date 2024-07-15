@@ -22,28 +22,28 @@ import os
 
 ## general parameters
 tol = 1e-8 # tolerance for stopping training
-save_fig = True # save figures or not
+save_fig = False # save figures or not
 
 ## Data and test case
-testcase = "testcase5" # Testcase (choose the one you want to run)
+testcase = "adr" # Testcase (choose the one you want to run)
 coarsen_data = 1 # coarsening of the data (1 = no coarsening, >1 = coarsening skipping points)
 data_perturbation = 0e-2 # perturbation for the data
 
 ## Parameters
-train_parameters = True # train the parameters or not
+train_parameters = False # train the parameters or not
 nparam = 2 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
-param_perturbation = 2 # perturbation for the parameters - factor for random perturbation of the parameters # 1 no perturbation, 10 means factor 10
+param_perturbation = 1 # perturbation for the parameters - factor for random perturbation of the parameters # 1 no perturbation, 10 means factor 10
 learning_rate_param = 2e-1 # learning rate of the parameters
 train_parameters_epoch = 1000 # epoch after which train the parameters
 
 ## Loss function weights (will be normalised afterwards)
 pde_weight = 1.      # penalty for the PDE
-data_weight = 1.     # penalty for the data fitting (will be multiplied by param_data_factor)
+data_weight = 0.     # penalty for the data fitting (will be multiplied by param_data_factor)
 ic_weight = 10.    # penalty for the initial condition
 bc_weight = 10.     # penalty for the boundary condition
 
 # NN training parameters
-epochs = 10000          # number of epochs
+epochs = 5000          # number of epochs
 epoch_print = 10      # print the loss every epoch_print epochs
 
 learning_rate = 1e-2   # learning rate for the network weights
@@ -75,6 +75,7 @@ def num_neurons_per_layer(depth): # number of neurons per layer (adapted to the 
     # return np.floor(num_neurons*(np.exp(-(depth-0.5)**2 * np.log(num_neurons/2.1)/((0.5)**2))))  # Gaussian distribution of neurons
 activation = 'tanh' # 'sigmoid' or 'tanh' or 'relu' or 'elu' or 'selu' or 'softplus' or 'softsign' or 'exponential' or 'linear'
 
+reaction_model = 'michaelis-menten' # 'michaelis-menten' or 'linear' or 'quadratic' or 'polynomial'
 
 
 #%%
@@ -136,9 +137,32 @@ xx = tf.Variable(x_tf)
 randp =  (p * param_perturbation**(np.random.rand(p.size)*2 -1 )).astype(np.float32) # perturb parameters randomly
 d = keras.Variable([randp[1]], trainable=train_parameters) # diffusion coefficient
 u = keras.Variable([randp[2]], trainable=(train_parameters and nparam>1))  # advection velocity
-beta0 = keras.Variable([randp[0]], trainable=(train_parameters and nparam>2))  # porosity
-params = [d, u, beta0]
-params0 = [p[1], p[2], p[0]] # true parameters
+beta0 = p[0] # porosity is fixed
+sigma = keras.Variable([randp[3]], trainable=(train_parameters and nparam>2))  # reaction constant
+params = [d, u, sigma]
+params0 = [p[1], p[2], p[3]] # true parameters
+
+# restore correct values for the parameters after nparam
+params[nparam:] = params0[nparam:]
+
+print("Real parameters: d = {:.2e}, u = {:.2e}, sigma = {:.2e}".format(*params0))
+
+# non-linear reaction term
+@tf.function(reduce_retracing=True)
+def reaction(c, sigma=sigma, sigma2=1.0e-1, forward_rate=3.0, backward_rate=3.0):
+    if (reaction_model == 'michaelis-menten'):
+        return sigma * c**forward_rate / (sigma2 + c**backward_rate) # michaelis-menten kinetics
+    elif (reaction_model == 'linear'):
+        return sigma * c # linear reaction
+    elif (reaction_model == 'quadratic'):
+        return sigma * c**2
+    elif (reaction_model == 'polynomial'):
+        return sigma * c**forward_rate * (1 - c)**backward_rate
+    else:
+        print('Reaction model not implemented')
+        return 0
+    
+
 
 #%%
 # Define the PINN model and loss functions
@@ -291,7 +315,7 @@ for epoch in range(epochs):
     # outputs to screen
     if epoch % epoch_print == 0:
         print(f"\nEpoch {epoch + 1}/{epochs}, Loss: {loss[-1].numpy():.2e}, lr: {lr:.2e}")
-        print(f"param_data_factor = {param_data_factor:.2e} beta0 = {beta0.numpy()[0]:.4e}, d = {d.numpy()[0]:.4e}, u = {u.numpy()[0]:.4e} ")
+        print(f"param_data_factor = {param_data_factor:.2e} beta0 = {beta0:.4e}, d = {d.numpy()[0]:.4e}, u = {u.numpy()[0]:.4e}, sigma = {sigma.numpy()[0]:.4e}")
         # print('CPU time for {} epochs: {} seconds'.format(epoch_print,time() - t1))
         # t1 = time()
     
