@@ -12,6 +12,9 @@ from time import time
 import matplotlib.pyplot as plt
 import os
 
+seed = int(time())
+np.random.seed(seed)
+
 # # Configure TensorFlow to use the specified number of threads
 # tf.config.threading.set_intra_op_parallelism_threads(4)
 # tf.config.threading.set_inter_op_parallelism_threads(4)
@@ -136,9 +139,14 @@ xx = tf.Variable(x_tf)
 randp =  (p * param_perturbation**(np.random.rand(p.size)*2 -1 )).astype(np.float32) # perturb parameters randomly
 d = keras.Variable([randp[1]], trainable=train_parameters) # diffusion coefficient
 u = keras.Variable([randp[2]], trainable=(train_parameters and nparam>1))  # advection velocity
-beta0 = keras.Variable([randp[0]], trainable=(train_parameters and nparam>2))  # porosity
-params = [d, u, beta0]
-params0 = [p[1], p[2], p[0]] # true parameters
+beta0 = p[0] # porosity is fixed
+sigma = keras.Variable([randp[3]], trainable=(train_parameters and nparam>2))  # reaction constant
+params = [d, u, sigma]
+params0 = [p[1], p[2], p[3]] # true parameters
+
+# restore correct values for the parameters after nparam
+params[nparam:] = params0[nparam:]
+print("Real parameters: d = {:.2e}, u = {:.2e}, sigma = {:.2e}".format(*params0), " por = {:.2e}".format(*[beta0]))
 
 #%%
 # Define the PINN model and loss functions
@@ -226,7 +234,8 @@ optimizer = keras.optimizers.Adam(learning_rate=learning_rate,amsgrad=True)
 losses = np.zeros((epochs, 9))
 param_values = np.zeros((epochs, nparam))
 param_grads = np.zeros((epochs, nparam))
-param_hessian = np.zeros((epochs, nparam))
+# param_hessian = np.zeros((epochs, nparam))
+l2_errors = np.zeros((epochs, 1))
 
 # Start loop and timer
 stop = False
@@ -286,12 +295,20 @@ for epoch in range(epochs):
     # store parameter values
     param_values[epoch,:] = np.array(params[:nparam]).squeeze()
     
+    # l2 errors
+    sol = model([t_data, x_data]).numpy().reshape(nt, nx)
+    l2_errors[epoch] = np.linalg.norm(sol - c_data_2d)/np.linalg.norm(c_data_2d)
+    
     # outputs to screen
     if epoch % epoch_print == 0:
-        print(f"\nEpoch {epoch + 1}/{epochs}, Loss: {loss[-1].numpy():.2e}, lr: {lr:.2e}")
-        print(f"param_data_factor = {param_data_factor:.2e} beta0 = {beta0.numpy()[0]:.4e}, d = {d.numpy()[0]:.4e}, u = {u.numpy()[0]:.4e} ")
-        # print('CPU time for {} epochs: {} seconds'.format(epoch_print,time() - t1))
-        # t1 = time()
+        print(f"\nEpoch {epoch + 1}/{epochs}, Loss: {loss[-1].numpy()}")
+        # cpu time
+        print('CPU time for {} epochs: {} seconds'.format(epoch_print,time() - t1))
+        t1 = time()
+        # l2 error
+        print("l2 space-time relative error: ", l2_errors[epoch])    
+        # parameters
+        print(f"param_data_factor = {param_data_factor:.2e}, d = {d.numpy()[0]:.4e}, u = {u.numpy()[0]:.4e} ")
     
     # Check if the loss and the parameters are not decreasing more than a tolerance from the previous epoch
     if epoch > 2*train_parameters_epoch and np.abs(losses[epoch,-1] - losses[epoch-1,-1]) < tol*losses[0,-1] and np.abs(param_values[epoch,0] - param_values[epoch-1,0]) < tol*param_values[0,0]:   
@@ -312,7 +329,7 @@ plt.semilogy(losses[:epoch,2], '.', label='IC')
 plt.semilogy(losses[:epoch,3], '.', label='BC')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
-plt.title('Unweighted Loss Function')
+# plt.title('Unweighted Loss Function')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid()
 if save_fig:
@@ -330,7 +347,7 @@ plt.semilogy(losses[:epoch,7], '.', label='BC')
 plt.semilogy(losses[:epoch,8], '.', label='Total')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
-plt.title('Weighted Loss Function')
+# plt.title('Weighted Loss Function')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid()
 if save_fig:
@@ -349,7 +366,7 @@ for i in range(0, nt, 5):
     plt.plot(x_grid, c_data_2d[i, :], 'b--', linewidth=3, dashes=(2, 5), label='Data' if i == 0 else '')
 plt.xlabel('x')
 plt.ylabel('u')
-plt.title('Concentration vs space')
+# plt.title('Concentration vs space')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid()
 if save_fig:
@@ -365,7 +382,7 @@ for i in range(0, nx, 5):
     plt.plot(t_grid, c_data_2d[:,i], 'b--', linewidth=3, dashes=(2, 5), label='Data' if i == 0 else '')
 plt.xlabel('t')
 plt.ylabel('u')
-plt.title('Concentration vs time')
+# plt.title('Concentration vs time')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid()
 if save_fig:
@@ -378,12 +395,15 @@ plt.show()
 
 # Plot the parameters over time
 for i in range(nparam):
-    plt.plot(param_values[:epoch,i], label=r'$p_{{{}}}$'.format(i))
-    # plot a line representing the true parameter value
-    plt.plot(np.ones(epoch)*params0[i]*randp[0], '--k', label=r'$p_{{{}^\text{{ref}}}}$'.format(i))
+    # plt.plot(param_values[:epoch,i], label=r'$p_{{{}}}$'.format(i))
+    # # plot a line representing the true parameter value
+    # plt.plot(np.ones(epoch)*params0[i]*randp[0], '--k', label=r'$p_{{{}^\text{{ref}}}}$'.format(i))
+    plt.plot(abs(param_values[:epoch,i]-params0[i])/params0[i], label=r'$\theta_{{0{}}}$'.format(i))
+# add a line for the l2 error
+plt.plot(l2_errors[:epoch], label=r'$u$', color='black')
 plt.xlabel('Epoch')
-plt.ylabel('Parameter value')
-plt.title('Parameters over time')
+plt.ylabel('Relative error')
+# plt.title('Parameters over time')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid()
 if save_fig:
@@ -396,11 +416,11 @@ plt.show()
 
 # Plot the parameter gradients over time
 for i in range(nparam):
-    plt.semilogy(abs(param_grads[:epoch,0]), '.', label=r'$p_{{{}}}$'.format(i))
+    plt.semilogy(abs(param_grads[:epoch,0]), '.', label=r'$\theta_{{0{}}}$'.format(i))
     # plt.semilogy(abs(param_hessian[:epoch,0]), '*', label='d Hessian')
 plt.xlabel('Epoch')
 plt.ylabel('Parameter gradients')
-plt.title('Parameter gradients over time')
+# plt.title('Parameter gradients over time')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid()
 if save_fig:

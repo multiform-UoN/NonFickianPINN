@@ -11,6 +11,9 @@ from time import time
 import matplotlib.pyplot as plt
 import os
 
+seed = int(time())
+np.random.seed(seed)
+
 # Configure TensorFlow to use the specified number of threads
 tf.config.threading.set_intra_op_parallelism_threads(1)
 tf.config.threading.set_inter_op_parallelism_threads(1)
@@ -247,8 +250,8 @@ plt.semilogy(ic_fitting_losses/ic_fitting_losses[0], label='IC Fitting Loss')
 plt.semilogy(data_bc_fitting_losses/data_bc_fitting_losses[0], label='BC Fitting Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
-plt.title('Loss Contributions')
-plt.legend()
+# plt.title('Loss Contributions')
+plt.legend(loc='best')
 plt.grid()
 plt.show()
 
@@ -260,8 +263,8 @@ plt.semilogy(ic_fitting_losses, label='IC Fitting Loss')
 plt.semilogy(data_bc_fitting_losses, label='BC Fitting Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
-plt.title('Loss Contributions')
-plt.legend()
+# plt.title('Loss Contributions')
+plt.legend(loc='best')
 plt.grid()
 plt.show()
 
@@ -282,8 +285,8 @@ for i in range(sol_c_.shape[0]):
     plt.plot(x_data, c_data_[i, :],'*r')#, label='c_data')
 plt.xlabel('x')
 plt.ylabel('fun')
-plt.title('Comparison')
-plt.legend()
+# plt.title('Comparison')
+plt.legend(loc='best')
 plt.grid()
 plt.show()
 
@@ -292,8 +295,8 @@ for i in range(sol_c_.shape[0]):
     plt.plot(x_data, c1_data_[i, :],'*r')#, label='c1_data')
 plt.xlabel('x')
 plt.ylabel('fun')
-plt.title('Comparison')
-plt.legend()
+# plt.title('Comparison')
+plt.legend(loc='best')
 plt.grid()
 plt.show()
 
