@@ -26,7 +26,13 @@ np.random.seed(seed)
 ## general parameters
 tol = 1e-8 # tolerance for stopping training
 save_fig = True # save figures or not
-
+interactive = False # interactive plotting or not
+def close_figure():
+    if not interactive:
+        plt.close()
+    else:
+        close_figure()
+        
 ## Data and test case
 testcase = "testcase5" # Testcase (choose the one you want to run)
 coarsen_data = 1 # coarsening of the data (1 = no coarsening, >1 = coarsening skipping points)
@@ -36,12 +42,12 @@ data_perturbation = 0e-2 # perturbation for the data
 train_parameters = True # train the parameters or not
 nparam = 2 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
 param_perturbation = 2 # perturbation for the parameters - factor for random perturbation of the parameters # 1 no perturbation, 10 means factor 10
-learning_rate_param = 2e-1 # learning rate of the parameters
-train_parameters_epoch = 1000 # epoch after which train the parameters
+learning_rate_param = 1e-2 # learning rate of the parameters
+train_parameters_epoch = 2000 # epoch after which train the parameters
 
 ## Loss function weights (will be normalised afterwards)
 pde_weight = 1.      # penalty for the PDE
-data_weight = 2.     # penalty for the data fitting (will be multiplied by param_data_factor)
+data_weight = 1.     # penalty for the data fitting (will be multiplied by param_data_factor)
 ic_weight = 10.    # penalty for the initial condition
 bc_weight = 10.     # penalty for the boundary condition
 
@@ -89,6 +95,10 @@ datafolder = "../data/"+testcase
 if not os.path.exists(datafolder):
     # If it doesn't exist, use the folder name without the "../"
     datafolder = "data/"+testcase
+resultfolder = '../results/'+testcase+'_'+str(seed)
+if not os.path.exists('../results'):
+    # If it doesn't exist, use the folder name without the "../"
+    resultfolder = 'results/'+testcase+'_'+str(seed)
 
 # Load data as pandas dataframes
 p = pd.read_csv(f'{datafolder}/p.csv', header=None, dtype=np.float32)
@@ -330,14 +340,14 @@ plt.semilogy(losses[:epoch,3], '.', label='BC')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 # plt.title('Unweighted Loss Function')
-plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+plt.legend(loc='best', bbox_to_anchor=(0.5, 0.5, 0.5, 0.5))
 plt.grid()
 if save_fig:
     # save png
-    plt.savefig('../results/'+testcase+'_unweighted_loss.png', dpi=300)
+    plt.savefig(resultfolder+'_unweighted_loss.png', dpi=300)
     # save pdf
-    plt.savefig('../results/'+testcase+'_unweighted_loss.pdf', dpi=300)
-plt.show()
+    plt.savefig(resultfolder+'_unweighted_loss.pdf', dpi=300)
+close_figure()
 
 # Plot the loss history (weighted)
 plt.semilogy(losses[:epoch,4], '.', label='PDE')
@@ -348,14 +358,14 @@ plt.semilogy(losses[:epoch,8], '.', label='Total')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 # plt.title('Weighted Loss Function')
-plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+plt.legend(loc='best', bbox_to_anchor=(0.5, 0.5, 0.5, 0.5))
 plt.grid()
 if save_fig:
     # save png
-    plt.savefig('../results/'+testcase+'_weighted_loss.png', dpi=300)
+    plt.savefig(resultfolder+'_weighted_loss.png', dpi=300)
     # save pdf
-    plt.savefig('../results/'+testcase+'_weighted_loss.pdf', dpi=300)
-plt.show()
+    plt.savefig(resultfolder+'_weighted_loss.pdf', dpi=300)
+close_figure()
 
 # Plot the solutions
 sol = model([t_data, x_data]).numpy().reshape(nt, nx)
@@ -367,14 +377,14 @@ for i in range(0, nt, 5):
 plt.xlabel('x')
 plt.ylabel('u')
 # plt.title('Concentration vs space')
-plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+plt.legend(loc='best', bbox_to_anchor=(0.5, 0.5, 0.5, 0.5))
 plt.grid()
 if save_fig:
     # save png
-    plt.savefig('../results/'+testcase+'_ux.png', dpi=300)
+    plt.savefig(resultfolder+'_ux.png', dpi=300)
     # save pdf
-    plt.savefig('../results/'+testcase+'_ux.pdf', dpi=300)
-plt.show()
+    plt.savefig(resultfolder+'_ux.pdf', dpi=300)
+close_figure()
 
 # Plot solutions in time
 for i in range(0, nx, 5):
@@ -383,14 +393,14 @@ for i in range(0, nx, 5):
 plt.xlabel('t')
 plt.ylabel('u')
 # plt.title('Concentration vs time')
-plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+plt.legend(loc='best', bbox_to_anchor=(0.5, 0.5, 0.5, 0.5))
 plt.grid()
 if save_fig:
     # save png
-    plt.savefig('../results/'+testcase+'_ut.png', dpi=300)
+    plt.savefig(resultfolder+'_ut.png', dpi=300)
     # save pdf
-    plt.savefig('../results/'+testcase+'_ut.pdf', dpi=300)
-plt.show()
+    plt.savefig(resultfolder+'_ut.pdf', dpi=300)
+close_figure()
     
 
 # Plot the parameters over time
@@ -404,14 +414,14 @@ plt.plot(l2_errors[:epoch], label=r'$u$', color='black')
 plt.xlabel('Epoch')
 plt.ylabel('Relative error')
 # plt.title('Parameters over time')
-plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+plt.legend(loc='best', bbox_to_anchor=(0.5, 0.5, 0.5, 0.5))
 plt.grid()
 if save_fig:
     # save png
-    plt.savefig('../results/'+testcase+'_param.png', dpi=300)
+    plt.savefig(resultfolder+'_param.png', dpi=300)
     # save pdf
-    plt.savefig('../results/'+testcase+'_param.pdf', dpi=300)
-plt.show()
+    plt.savefig(resultfolder+'_param.pdf', dpi=300)
+close_figure()
 
 
 # Plot the parameter gradients over time
@@ -421,14 +431,14 @@ for i in range(nparam):
 plt.xlabel('Epoch')
 plt.ylabel('Parameter gradients')
 # plt.title('Parameter gradients over time')
-plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+plt.legend(loc='best', bbox_to_anchor=(0.5, 0.5, 0.5, 0.5))
 plt.grid()
 if save_fig:
     # save png
-    plt.savefig('../results/'+testcase+'_param_grads.png', dpi=300)
+    plt.savefig(resultfolder+'_param_grads.png', dpi=300)
     # save pdf
-    plt.savefig('../results/'+testcase+'_param_grads.pdf', dpi=300)
-plt.show()
+    plt.savefig(resultfolder+'_param_grads.pdf', dpi=300)
+close_figure()
 
 
 # %%

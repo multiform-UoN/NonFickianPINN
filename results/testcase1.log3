@@ -1,0 +1,503 @@
+Real parameters: d = 1.00e-01, u = 1.00e+00, lambda0 = 1.00e+00, lambda1 = 1.00e+01
+
+Epoch 1/10000, Loss: 0.4903417229652405
+CPU time for 100 epochs: 1.958035945892334 seconds
+l2 space-time relative error:  0.31159702571954195
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 101/10000, Loss: 0.012370798736810684
+CPU time for 100 epochs: 15.120018005371094 seconds
+l2 space-time relative error:  0.1296109969596973
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 201/10000, Loss: 0.01581469736993313
+CPU time for 100 epochs: 22.092839002609253 seconds
+l2 space-time relative error:  0.12926530271995668
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 301/10000, Loss: 0.003853247966617346
+CPU time for 100 epochs: 22.369110107421875 seconds
+l2 space-time relative error:  0.13879191185650852
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 401/10000, Loss: 0.003256213152781129
+CPU time for 100 epochs: 21.955308198928833 seconds
+l2 space-time relative error:  0.11961746337261865
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 501/10000, Loss: 0.0023781447671353817
+CPU time for 100 epochs: 22.054805040359497 seconds
+l2 space-time relative error:  0.1311954409599579
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 601/10000, Loss: 0.0028788219206035137
+CPU time for 100 epochs: 22.247965097427368 seconds
+l2 space-time relative error:  0.1424942508633781
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 701/10000, Loss: 0.0028465124778449535
+CPU time for 100 epochs: 22.30346918106079 seconds
+l2 space-time relative error:  0.14401882920897374
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 801/10000, Loss: 0.0032451406586915255
+CPU time for 100 epochs: 22.598512887954712 seconds
+l2 space-time relative error:  0.11346578876040024
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 901/10000, Loss: 0.003134096274152398
+CPU time for 100 epochs: 22.495723009109497 seconds
+l2 space-time relative error:  0.11393013083363085
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 1001/10000, Loss: 0.0008502097334712744
+CPU time for 100 epochs: 129.78644013404846 seconds
+l2 space-time relative error:  0.13652486112131063
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 1101/10000, Loss: 0.00043195387115702033
+CPU time for 100 epochs: 21.82552719116211 seconds
+l2 space-time relative error:  0.1316361622560341
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 1201/10000, Loss: 0.00034454005071893334
+CPU time for 100 epochs: 7065.637138843536 seconds
+l2 space-time relative error:  0.13466588231531784
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 1301/10000, Loss: 0.0003937010478693992
+CPU time for 100 epochs: 22.061272859573364 seconds
+l2 space-time relative error:  0.12861714493715068
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 1401/10000, Loss: 0.0006243798416107893
+CPU time for 100 epochs: 7222.233887910843 seconds
+l2 space-time relative error:  0.12848352298202861
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 1501/10000, Loss: 0.0004566882853396237
+CPU time for 100 epochs: 22.243895769119263 seconds
+l2 space-time relative error:  0.1278443953227914
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 1601/10000, Loss: 0.002835008315742016
+CPU time for 100 epochs: 6457.599553108215 seconds
+l2 space-time relative error:  0.12310929842560323
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 1701/10000, Loss: 0.0002519126865081489
+CPU time for 100 epochs: 22.48665976524353 seconds
+l2 space-time relative error:  0.13001369538773633
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 1801/10000, Loss: 0.000253800448263064
+CPU time for 100 epochs: 454.96659803390503 seconds
+l2 space-time relative error:  0.13581781974607826
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 1901/10000, Loss: 0.000558091327548027
+CPU time for 100 epochs: 22.36533784866333 seconds
+l2 space-time relative error:  0.1343592204494086
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 2001/10000, Loss: 0.0003800939884968102
+CPU time for 100 epochs: 6298.075281858444 seconds
+l2 space-time relative error:  0.13180635514729458
+param_data_factor = 0.00e+00 d = 6.33e-01, u = 6.69e-01, lambda0 = 3.41e-01, lambda1 = 2.96e+00
+
+Epoch 2101/10000, Loss: 0.00017474977357778698
+CPU time for 100 epochs: 22.259780168533325 seconds
+l2 space-time relative error:  0.12883201071122793
+param_data_factor = 5.54e-05 d = 6.22e-01, u = 6.68e-01, lambda0 = 3.39e-01, lambda1 = 2.96e+00
+
+Epoch 2201/10000, Loss: 6.767387822037563e-05
+CPU time for 100 epochs: 911.1759600639343 seconds
+l2 space-time relative error:  0.1279299247413229
+param_data_factor = 6.77e-05 d = 6.14e-01, u = 6.67e-01, lambda0 = 3.38e-01, lambda1 = 2.96e+00
+
+Epoch 2301/10000, Loss: 9.400391718372703e-05
+CPU time for 100 epochs: 22.279484748840332 seconds
+l2 space-time relative error:  0.12652246760409505
+param_data_factor = 8.27e-05 d = 6.08e-01, u = 6.66e-01, lambda0 = 3.37e-01, lambda1 = 2.96e+00
+
+Epoch 2401/10000, Loss: 4.016210732515901e-05
+CPU time for 100 epochs: 22.045958042144775 seconds
+l2 space-time relative error:  0.12592632221466965
+param_data_factor = 1.01e-04 d = 6.03e-01, u = 6.66e-01, lambda0 = 3.36e-01, lambda1 = 2.96e+00
+
+Epoch 2501/10000, Loss: 7.701215508859605e-05
+CPU time for 100 epochs: 3590.328029870987 seconds
+l2 space-time relative error:  0.12486855336638857
+param_data_factor = 1.23e-04 d = 5.98e-01, u = 6.65e-01, lambda0 = 3.35e-01, lambda1 = 2.96e+00
+
+Epoch 2601/10000, Loss: 3.3146177884191275e-05
+CPU time for 100 epochs: 21.999496936798096 seconds
+l2 space-time relative error:  0.1241118715231654
+param_data_factor = 1.51e-04 d = 5.96e-01, u = 6.64e-01, lambda0 = 3.34e-01, lambda1 = 2.96e+00
+
+Epoch 2701/10000, Loss: 3.3508036722196266e-05
+CPU time for 100 epochs: 3635.401445865631 seconds
+l2 space-time relative error:  0.12370031072849631
+param_data_factor = 1.84e-04 d = 5.93e-01, u = 6.64e-01, lambda0 = 3.32e-01, lambda1 = 2.96e+00
+
+Epoch 2801/10000, Loss: 3.236538032069802e-05
+CPU time for 100 epochs: 22.0868558883667 seconds
+l2 space-time relative error:  0.12326104110944161
+param_data_factor = 2.25e-04 d = 5.91e-01, u = 6.63e-01, lambda0 = 3.30e-01, lambda1 = 2.96e+00
+
+Epoch 2901/10000, Loss: 2.931886956503149e-05
+CPU time for 100 epochs: 3636.6075649261475 seconds
+l2 space-time relative error:  0.12261669966563854
+param_data_factor = 2.75e-04 d = 5.89e-01, u = 6.63e-01, lambda0 = 3.28e-01, lambda1 = 2.96e+00
+
+Epoch 3001/10000, Loss: 3.1337276595877483e-05
+CPU time for 100 epochs: 22.497682332992554 seconds
+l2 space-time relative error:  0.12271590091563338
+param_data_factor = 3.35e-04 d = 5.88e-01, u = 6.63e-01, lambda0 = 3.26e-01, lambda1 = 2.96e+00
+
+Epoch 3101/10000, Loss: 2.3554654035251588e-05
+CPU time for 100 epochs: 3281.5667011737823 seconds
+l2 space-time relative error:  0.12243013559268924
+param_data_factor = 4.10e-04 d = 5.87e-01, u = 6.62e-01, lambda0 = 3.24e-01, lambda1 = 2.96e+00
+
+Epoch 3201/10000, Loss: 2.2058928152546287e-05
+CPU time for 100 epochs: 22.98661994934082 seconds
+l2 space-time relative error:  0.1222531231043266
+param_data_factor = 5.00e-04 d = 5.87e-01, u = 6.62e-01, lambda0 = 3.22e-01, lambda1 = 2.96e+00
+
+Epoch 3301/10000, Loss: 2.1179765099077486e-05
+CPU time for 100 epochs: 22.656505823135376 seconds
+l2 space-time relative error:  0.12218131528989834
+param_data_factor = 6.11e-04 d = 5.86e-01, u = 6.61e-01, lambda0 = 3.20e-01, lambda1 = 2.96e+00
+
+Epoch 3401/10000, Loss: 2.0527799279079773e-05
+CPU time for 100 epochs: 23.34758186340332 seconds
+l2 space-time relative error:  0.12207706684852203
+param_data_factor = 7.46e-04 d = 5.85e-01, u = 6.60e-01, lambda0 = 3.19e-01, lambda1 = 2.96e+00
+
+Epoch 3501/10000, Loss: 2.0039567971252836e-05
+CPU time for 100 epochs: 23.200889110565186 seconds
+l2 space-time relative error:  0.1219603349430442
+param_data_factor = 9.11e-04 d = 5.85e-01, u = 6.60e-01, lambda0 = 3.18e-01, lambda1 = 2.96e+00
+
+Epoch 3601/10000, Loss: 1.971245183085557e-05
+CPU time for 100 epochs: 22.933884143829346 seconds
+l2 space-time relative error:  0.12183812974559087
+param_data_factor = 1.11e-03 d = 5.84e-01, u = 6.59e-01, lambda0 = 3.17e-01, lambda1 = 2.96e+00
+
+Epoch 3701/10000, Loss: 1.9548821001080796e-05
+CPU time for 100 epochs: 22.82194185256958 seconds
+l2 space-time relative error:  0.12171847841256302
+param_data_factor = 1.36e-03 d = 5.84e-01, u = 6.58e-01, lambda0 = 3.16e-01, lambda1 = 2.96e+00
+
+Epoch 3801/10000, Loss: 1.9553996025933884e-05
+CPU time for 100 epochs: 22.960871934890747 seconds
+l2 space-time relative error:  0.12161327003335971
+param_data_factor = 1.66e-03 d = 5.84e-01, u = 6.58e-01, lambda0 = 3.17e-01, lambda1 = 2.96e+00
+
+Epoch 3901/10000, Loss: 1.973496182472445e-05
+CPU time for 100 epochs: 23.095242977142334 seconds
+l2 space-time relative error:  0.12153914598762199
+param_data_factor = 2.03e-03 d = 5.84e-01, u = 6.58e-01, lambda0 = 3.18e-01, lambda1 = 2.96e+00
+
+Epoch 4001/10000, Loss: 2.0100504116271622e-05
+CPU time for 100 epochs: 22.712246894836426 seconds
+l2 space-time relative error:  0.12151389136039259
+param_data_factor = 2.47e-03 d = 5.84e-01, u = 6.59e-01, lambda0 = 3.20e-01, lambda1 = 2.96e+00
+
+Epoch 4101/10000, Loss: 2.065917942672968e-05
+CPU time for 100 epochs: 22.712951183319092 seconds
+l2 space-time relative error:  0.12155951843640356
+param_data_factor = 3.02e-03 d = 5.84e-01, u = 6.60e-01, lambda0 = 3.23e-01, lambda1 = 2.96e+00
+
+Epoch 4201/10000, Loss: 2.141806726285722e-05
+CPU time for 100 epochs: 22.656480073928833 seconds
+l2 space-time relative error:  0.12169854602876314
+param_data_factor = 3.68e-03 d = 5.85e-01, u = 6.62e-01, lambda0 = 3.28e-01, lambda1 = 2.96e+00
+
+Epoch 4301/10000, Loss: 2.238408342236653e-05
+CPU time for 100 epochs: 23.14678978919983 seconds
+l2 space-time relative error:  0.12195160442684483
+param_data_factor = 4.50e-03 d = 5.86e-01, u = 6.66e-01, lambda0 = 3.34e-01, lambda1 = 2.96e+00
+
+Epoch 4401/10000, Loss: 2.359348400204908e-05
+CPU time for 100 epochs: 23.290061950683594 seconds
+l2 space-time relative error:  0.12233709570547173
+param_data_factor = 5.49e-03 d = 5.87e-01, u = 6.71e-01, lambda0 = 3.42e-01, lambda1 = 2.96e+00
+
+Epoch 4501/10000, Loss: 2.506919736333657e-05
+CPU time for 100 epochs: 22.801270008087158 seconds
+l2 space-time relative error:  0.12288998181162966
+param_data_factor = 6.69e-03 d = 5.89e-01, u = 6.77e-01, lambda0 = 3.50e-01, lambda1 = 2.96e+00
+
+Epoch 4601/10000, Loss: 2.7665822926792316e-05
+CPU time for 100 epochs: 22.48595905303955 seconds
+l2 space-time relative error:  0.12359285967312543
+param_data_factor = 8.16e-03 d = 5.90e-01, u = 6.86e-01, lambda0 = 3.61e-01, lambda1 = 2.96e+00
+
+Epoch 4701/10000, Loss: 2.8508527975645848e-05
+CPU time for 100 epochs: 23.20714282989502 seconds
+l2 space-time relative error:  0.12410733658350527
+param_data_factor = 9.95e-03 d = 5.92e-01, u = 6.96e-01, lambda0 = 3.72e-01, lambda1 = 2.96e+00
+
+Epoch 4801/10000, Loss: 3.068796650040895e-05
+CPU time for 100 epochs: 22.971245050430298 seconds
+l2 space-time relative error:  0.12484349120413707
+param_data_factor = 1.21e-02 d = 5.94e-01, u = 7.07e-01, lambda0 = 3.86e-01, lambda1 = 2.96e+00
+
+Epoch 4901/10000, Loss: 3.4078035241691396e-05
+CPU time for 100 epochs: 23.188354969024658 seconds
+l2 space-time relative error:  0.1255983345898575
+param_data_factor = 1.48e-02 d = 5.94e-01, u = 7.19e-01, lambda0 = 4.00e-01, lambda1 = 2.96e+00
+
+Epoch 5001/10000, Loss: 3.607041799114086e-05
+CPU time for 100 epochs: 23.332763195037842 seconds
+l2 space-time relative error:  0.12611545341063538
+param_data_factor = 1.80e-02 d = 5.95e-01, u = 7.32e-01, lambda0 = 4.15e-01, lambda1 = 2.96e+00
+
+Epoch 5101/10000, Loss: 4.285507384338416e-05
+CPU time for 100 epochs: 22.59533405303955 seconds
+l2 space-time relative error:  0.1266135126752885
+param_data_factor = 2.19e-02 d = 5.95e-01, u = 7.45e-01, lambda0 = 4.32e-01, lambda1 = 2.96e+00
+
+Epoch 5201/10000, Loss: 4.3299500248394907e-05
+CPU time for 100 epochs: 22.930678844451904 seconds
+l2 space-time relative error:  0.12650815920117958
+param_data_factor = 2.66e-02 d = 5.94e-01, u = 7.55e-01, lambda0 = 4.48e-01, lambda1 = 2.96e+00
+
+Epoch 5301/10000, Loss: 4.7792585974093527e-05
+CPU time for 100 epochs: 22.72958207130432 seconds
+l2 space-time relative error:  0.12612305718911934
+param_data_factor = 3.23e-02 d = 5.92e-01, u = 7.64e-01, lambda0 = 4.66e-01, lambda1 = 2.96e+00
+
+Epoch 5401/10000, Loss: 5.298762698657811e-05
+CPU time for 100 epochs: 22.974616050720215 seconds
+l2 space-time relative error:  0.12506082206149716
+param_data_factor = 3.92e-02 d = 5.88e-01, u = 7.69e-01, lambda0 = 4.83e-01, lambda1 = 2.96e+00
+
+Epoch 5501/10000, Loss: 5.8863122831098735e-05
+CPU time for 100 epochs: 22.6403751373291 seconds
+l2 space-time relative error:  0.12345994174292539
+param_data_factor = 4.74e-02 d = 5.82e-01, u = 7.70e-01, lambda0 = 4.99e-01, lambda1 = 2.96e+00
+
+Epoch 5601/10000, Loss: 6.543620838783681e-05
+CPU time for 100 epochs: 22.46428418159485 seconds
+l2 space-time relative error:  0.12109073624101649
+param_data_factor = 5.73e-02 d = 5.74e-01, u = 7.68e-01, lambda0 = 5.16e-01, lambda1 = 2.96e+00
+
+Epoch 5701/10000, Loss: 7.316970732063055e-05
+CPU time for 100 epochs: 22.26904010772705 seconds
+l2 space-time relative error:  0.11791322846717632
+param_data_factor = 6.91e-02 d = 5.65e-01, u = 7.62e-01, lambda0 = 5.33e-01, lambda1 = 2.96e+00
+
+Epoch 5801/10000, Loss: 8.039474778342992e-05
+CPU time for 100 epochs: 21.96260404586792 seconds
+l2 space-time relative error:  0.11424360378868591
+param_data_factor = 8.32e-02 d = 5.53e-01, u = 7.53e-01, lambda0 = 5.50e-01, lambda1 = 2.96e+00
+
+Epoch 5901/10000, Loss: 8.849026926327497e-05
+CPU time for 100 epochs: 22.736908197402954 seconds
+l2 space-time relative error:  0.1099546888936728
+param_data_factor = 9.98e-02 d = 5.40e-01, u = 7.43e-01, lambda0 = 5.69e-01, lambda1 = 2.96e+00
+
+Epoch 6001/10000, Loss: 9.673782187746838e-05
+CPU time for 100 epochs: 22.353048086166382 seconds
+l2 space-time relative error:  0.10523563931169426
+param_data_factor = 1.19e-01 d = 5.25e-01, u = 7.32e-01, lambda0 = 5.89e-01, lambda1 = 2.96e+00
+
+Epoch 6101/10000, Loss: 0.00010497136099729687
+CPU time for 100 epochs: 22.121842861175537 seconds
+l2 space-time relative error:  0.10028425339803498
+param_data_factor = 1.42e-01 d = 5.09e-01, u = 7.22e-01, lambda0 = 6.10e-01, lambda1 = 2.96e+00
+
+Epoch 6201/10000, Loss: 0.00011289600661257282
+CPU time for 100 epochs: 21.23836874961853 seconds
+l2 space-time relative error:  0.09519012359536513
+param_data_factor = 1.68e-01 d = 4.92e-01, u = 7.14e-01, lambda0 = 6.33e-01, lambda1 = 2.96e+00
+
+Epoch 6301/10000, Loss: 0.00012028162745991722
+CPU time for 100 epochs: 21.397788763046265 seconds
+l2 space-time relative error:  0.09009390132009316
+param_data_factor = 1.98e-01 d = 4.75e-01, u = 7.09e-01, lambda0 = 6.59e-01, lambda1 = 2.96e+00
+
+Epoch 6401/10000, Loss: 0.00012730593152809888
+CPU time for 100 epochs: 21.562813997268677 seconds
+l2 space-time relative error:  0.08509020760923079
+param_data_factor = 2.31e-01 d = 4.57e-01, u = 7.06e-01, lambda0 = 6.86e-01, lambda1 = 2.96e+00
+
+Epoch 6501/10000, Loss: 0.0001326157944276929
+CPU time for 100 epochs: 22.270107984542847 seconds
+l2 space-time relative error:  0.08032037502204702
+param_data_factor = 2.69e-01 d = 4.38e-01, u = 7.06e-01, lambda0 = 7.14e-01, lambda1 = 2.96e+00
+
+Epoch 6601/10000, Loss: 0.00013714726082980633
+CPU time for 100 epochs: 21.376301765441895 seconds
+l2 space-time relative error:  0.07575057326000005
+param_data_factor = 3.10e-01 d = 4.20e-01, u = 7.09e-01, lambda0 = 7.45e-01, lambda1 = 2.96e+00
+
+Epoch 6701/10000, Loss: 0.00014041841495782137
+CPU time for 100 epochs: 20.47293710708618 seconds
+l2 space-time relative error:  0.07142518869589777
+param_data_factor = 3.54e-01 d = 4.01e-01, u = 7.14e-01, lambda0 = 7.77e-01, lambda1 = 2.96e+00
+
+Epoch 6801/10000, Loss: 0.00014276473666541278
+CPU time for 100 epochs: 19.9996600151062 seconds
+l2 space-time relative error:  0.06739028224408664
+param_data_factor = 4.01e-01 d = 3.84e-01, u = 7.20e-01, lambda0 = 8.07e-01, lambda1 = 2.96e+00
+
+Epoch 6901/10000, Loss: 0.00014355668099597096
+CPU time for 100 epochs: 19.962849140167236 seconds
+l2 space-time relative error:  0.06376854942673266
+param_data_factor = 4.50e-01 d = 3.67e-01, u = 7.29e-01, lambda0 = 8.37e-01, lambda1 = 2.96e+00
+
+Epoch 7001/10000, Loss: 0.00014348751574289054
+CPU time for 100 epochs: 19.9393527507782 seconds
+l2 space-time relative error:  0.0603733022146405
+param_data_factor = 5.00e-01 d = 3.51e-01, u = 7.39e-01, lambda0 = 8.67e-01, lambda1 = 2.96e+00
+
+Epoch 7101/10000, Loss: 0.00014278503658715636
+CPU time for 100 epochs: 20.357512950897217 seconds
+l2 space-time relative error:  0.057287508134983664
+param_data_factor = 5.50e-01 d = 3.36e-01, u = 7.49e-01, lambda0 = 8.90e-01, lambda1 = 2.96e+00
+
+Epoch 7201/10000, Loss: 0.00014081664266996086
+CPU time for 100 epochs: 20.304133892059326 seconds
+l2 space-time relative error:  0.05450413553245026
+param_data_factor = 5.99e-01 d = 3.21e-01, u = 7.62e-01, lambda0 = 9.12e-01, lambda1 = 2.96e+00
+
+Epoch 7301/10000, Loss: 0.0001381668116664514
+CPU time for 100 epochs: 20.324851989746094 seconds
+l2 space-time relative error:  0.051830065268739
+param_data_factor = 6.46e-01 d = 3.08e-01, u = 7.74e-01, lambda0 = 9.33e-01, lambda1 = 2.96e+00
+
+Epoch 7401/10000, Loss: 0.00013577393838204443
+CPU time for 100 epochs: 20.88766384124756 seconds
+l2 space-time relative error:  0.04968791302439668
+param_data_factor = 6.90e-01 d = 2.96e-01, u = 7.84e-01, lambda0 = 9.34e-01, lambda1 = 2.96e+00
+
+Epoch 7501/10000, Loss: 0.0001317658752668649
+CPU time for 100 epochs: 20.249047994613647 seconds
+l2 space-time relative error:  0.047374062412864404
+param_data_factor = 7.31e-01 d = 2.84e-01, u = 8.01e-01, lambda0 = 9.46e-01, lambda1 = 2.96e+00
+
+Epoch 7601/10000, Loss: 0.00012726327986456454
+CPU time for 100 epochs: 20.209842920303345 seconds
+l2 space-time relative error:  0.045146870201966754
+param_data_factor = 7.69e-01 d = 2.73e-01, u = 8.13e-01, lambda0 = 9.59e-01, lambda1 = 2.96e+00
+
+Epoch 7701/10000, Loss: 0.00012230317224748433
+CPU time for 100 epochs: 20.066640853881836 seconds
+l2 space-time relative error:  0.04302973522103652
+param_data_factor = 8.02e-01 d = 2.63e-01, u = 8.25e-01, lambda0 = 9.70e-01, lambda1 = 2.96e+00
+
+Epoch 7801/10000, Loss: 0.0001170765608549118
+CPU time for 100 epochs: 19.763154983520508 seconds
+l2 space-time relative error:  0.04102836392881782
+param_data_factor = 8.32e-01 d = 2.53e-01, u = 8.36e-01, lambda0 = 9.81e-01, lambda1 = 2.96e+00
+
+Epoch 7901/10000, Loss: 0.00011177307897014543
+CPU time for 100 epochs: 19.669126987457275 seconds
+l2 space-time relative error:  0.039152747318339946
+param_data_factor = 8.58e-01 d = 2.44e-01, u = 8.46e-01, lambda0 = 9.90e-01, lambda1 = 2.96e+00
+
+Epoch 8001/10000, Loss: 0.00011508166062412784
+CPU time for 100 epochs: 19.403704166412354 seconds
+l2 space-time relative error:  0.03928072951101928
+param_data_factor = 8.81e-01 d = 2.42e-01, u = 8.42e-01, lambda0 = 9.68e-01, lambda1 = 2.96e+00
+
+Epoch 8101/10000, Loss: 0.0001060174181475304
+CPU time for 100 epochs: 19.52429699897766 seconds
+l2 space-time relative error:  0.037193700887672425
+param_data_factor = 9.00e-01 d = 2.34e-01, u = 8.61e-01, lambda0 = 9.71e-01, lambda1 = 2.96e+00
+
+Epoch 8201/10000, Loss: 0.00010044955706689507
+CPU time for 100 epochs: 20.036788940429688 seconds
+l2 space-time relative error:  0.035420946423570666
+param_data_factor = 9.17e-01 d = 2.25e-01, u = 8.71e-01, lambda0 = 9.78e-01, lambda1 = 2.96e+00
+
+Epoch 8301/10000, Loss: 9.524726192466915e-05
+CPU time for 100 epochs: 19.99424695968628 seconds
+l2 space-time relative error:  0.03384279511187508
+param_data_factor = 9.31e-01 d = 2.18e-01, u = 8.79e-01, lambda0 = 9.84e-01, lambda1 = 2.96e+00
+
+Epoch 8401/10000, Loss: 9.03697291505523e-05
+CPU time for 100 epochs: 19.144715070724487 seconds
+l2 space-time relative error:  0.03239741088250856
+param_data_factor = 9.43e-01 d = 2.12e-01, u = 8.86e-01, lambda0 = 9.89e-01, lambda1 = 2.96e+00
+
+Epoch 8501/10000, Loss: 9.352527558803558e-05
+CPU time for 100 epochs: 19.437169313430786 seconds
+l2 space-time relative error:  0.032806004468801095
+param_data_factor = 9.53e-01 d = 2.13e-01, u = 8.86e-01, lambda0 = 9.89e-01, lambda1 = 2.96e+00
+
+Epoch 8601/10000, Loss: 8.4523948316928e-05
+CPU time for 100 epochs: 19.987767219543457 seconds
+l2 space-time relative error:  0.03095912298004536
+param_data_factor = 9.61e-01 d = 2.06e-01, u = 8.92e-01, lambda0 = 9.93e-01, lambda1 = 2.96e+00
+
+Epoch 8701/10000, Loss: 8.031754987314343e-05
+CPU time for 100 epochs: 19.583752870559692 seconds
+l2 space-time relative error:  0.029648365878712706
+param_data_factor = 9.68e-01 d = 2.00e-01, u = 8.98e-01, lambda0 = 9.98e-01, lambda1 = 2.96e+00
+
+Epoch 8801/10000, Loss: 7.864218787290156e-05
+CPU time for 100 epochs: 19.34142804145813 seconds
+l2 space-time relative error:  0.029446631041317634
+param_data_factor = 9.73e-01 d = 1.99e-01, u = 8.99e-01, lambda0 = 9.99e-01, lambda1 = 2.96e+00
+
+Epoch 8901/10000, Loss: 9.326765575679019e-05
+CPU time for 100 epochs: 19.678699016571045 seconds
+l2 space-time relative error:  0.028215638768954013
+param_data_factor = 9.78e-01 d = 1.94e-01, u = 9.04e-01, lambda0 = 1.00e+00, lambda1 = 2.96e+00
+
+Epoch 9001/10000, Loss: 7.406431541312486e-05
+CPU time for 100 epochs: 19.35384702682495 seconds
+l2 space-time relative error:  0.02779329928937508
+param_data_factor = 9.82e-01 d = 1.93e-01, u = 9.06e-01, lambda0 = 1.00e+00, lambda1 = 2.96e+00
+
+Epoch 9101/10000, Loss: 9.92908317130059e-05
+CPU time for 100 epochs: 19.974623918533325 seconds
+l2 space-time relative error:  0.028695016041490173
+param_data_factor = 9.85e-01 d = 1.90e-01, u = 9.20e-01, lambda0 = 1.01e+00, lambda1 = 2.96e+00
+
+Epoch 9201/10000, Loss: 6.817688699811697e-05
+CPU time for 100 epochs: 19.547718048095703 seconds
+l2 space-time relative error:  0.026656761293724587
+param_data_factor = 9.88e-01 d = 1.88e-01, u = 9.11e-01, lambda0 = 1.01e+00, lambda1 = 2.96e+00
+
+Epoch 9301/10000, Loss: 6.510019738925621e-05
+CPU time for 100 epochs: 19.575052976608276 seconds
+l2 space-time relative error:  0.025617823560333243
+param_data_factor = 9.90e-01 d = 1.83e-01, u = 9.15e-01, lambda0 = 1.01e+00, lambda1 = 2.96e+00
+
+Epoch 9401/10000, Loss: 0.0002122361329384148
+CPU time for 100 epochs: 19.43567991256714 seconds
+l2 space-time relative error:  0.027256551442084328
+param_data_factor = 9.92e-01 d = 1.83e-01, u = 9.35e-01, lambda0 = 1.01e+00, lambda1 = 2.96e+00
+
+Epoch 9501/10000, Loss: 6.258569919737056e-05
+CPU time for 100 epochs: 19.919639110565186 seconds
+l2 space-time relative error:  0.025261951149100962
+param_data_factor = 9.93e-01 d = 1.82e-01, u = 9.16e-01, lambda0 = 1.01e+00, lambda1 = 2.96e+00
+
+Epoch 9601/10000, Loss: 5.985155075904913e-05
+CPU time for 100 epochs: 19.690186977386475 seconds
+l2 space-time relative error:  0.024282323399999098
+param_data_factor = 9.95e-01 d = 1.78e-01, u = 9.20e-01, lambda0 = 1.02e+00, lambda1 = 2.96e+00
+
+Epoch 9701/10000, Loss: 5.7511762861395255e-05
+CPU time for 100 epochs: 19.34393286705017 seconds
+l2 space-time relative error:  0.023474336652107807
+param_data_factor = 9.96e-01 d = 1.75e-01, u = 9.23e-01, lambda0 = 1.02e+00, lambda1 = 2.96e+00
+
+Epoch 9801/10000, Loss: 5.538819823414087e-05
+CPU time for 100 epochs: 19.355376720428467 seconds
+l2 space-time relative error:  0.02275425835241748
+param_data_factor = 9.96e-01 d = 1.72e-01, u = 9.26e-01, lambda0 = 1.02e+00, lambda1 = 2.96e+00
+
+Epoch 9901/10000, Loss: 0.000593801902141422
+CPU time for 100 epochs: 20.05970811843872 seconds
+l2 space-time relative error:  0.02285675334535817
+param_data_factor = 9.97e-01 d = 1.70e-01, u = 9.31e-01, lambda0 = 1.02e+00, lambda1 = 2.96e+00
+
+Total training CPU time: 44588.74545788765 seconds

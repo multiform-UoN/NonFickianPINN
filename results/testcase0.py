@@ -25,7 +25,14 @@ np.random.seed(seed)
 
 ## general parameters
 tol = 1e-8 # tolerance for stopping training
-save_fig = False # save figures or not
+save_fig = True # save figures or not
+interactive = False # interactive plotting or not
+def close_figure():
+    if not interactive:
+        plt.close()
+    else:
+        close_figure()
+        
 
 ## Data and test case
 testcase = "testcase0" # Testcase (choose the one you want to run)
@@ -36,8 +43,8 @@ data_perturbation = 0e-2 # perturbation for the data
 train_parameters = True # train the parameters or not
 nparam = 1 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
 param_perturbation = 2 # perturbation for the parameters - factor for random perturbation of the parameters # 1 no perturbation, 10 means factor 10
-learning_rate_param = 2e-1 # learning rate of the parameters
-train_parameters_epoch = 1000 # epoch after which train the parameters
+learning_rate_param = 1e-1 # learning rate of the parameters
+train_parameters_epoch = 2000 # epoch after which train the parameters
 
 ## Loss function weights (will be normalised afterwards)
 pde_weight = 1.      # penalty for the PDE
@@ -46,11 +53,11 @@ ic_weight = 10.    # penalty for the initial condition
 bc_weight = 10.     # penalty for the boundary condition
 
 # NN training parameters
-epochs = 5000          # number of epochs
+epochs = 10000          # number of epochs
 epoch_print = 10      # print the loss every epoch_print epochs
 
 learning_rate = 1e-2   # learning rate for the network weights
-learning_rate_decay_factor = 0.95 # decay factor for the learning rate
+learning_rate_decay_factor = 0.98 # decay factor for the learning rate
 learning_rate_step = 100
 # Piecewise constant learning rate every Y epochs decayed by X
 learning_rate = keras.optimizers.schedules.PiecewiseConstantDecay(
@@ -89,6 +96,10 @@ datafolder = "../data/"+testcase
 if not os.path.exists(datafolder):
     # If it doesn't exist, use the folder name without the "../"
     datafolder = "data/"+testcase
+resultfolder = '../results/'+testcase+'_'+str(seed)
+if not os.path.exists('../results'):
+    # If it doesn't exist, use the folder name without the "../"
+    resultfolder = 'results/'+testcase+'_'+str(seed)
 
 # Load data as pandas dataframes
 p = pd.read_csv(f'{datafolder}/p.csv', header=None, dtype=np.float32)
@@ -335,10 +346,10 @@ plt.legend(loc='best', bbox_to_anchor=(0.5, 0.5, 0.5, 0.5))
 plt.grid()
 if save_fig:
     # save png
-    plt.savefig('../results/'+testcase+'_unweighted_loss.png', dpi=300)
+    plt.savefig(resultfolder+'_unweighted_loss.png', dpi=300)
     # save pdf
-    plt.savefig('../results/'+testcase+'_unweighted_loss.pdf', dpi=300)
-plt.show()
+    plt.savefig(resultfolder+'_unweighted_loss.pdf', dpi=300)
+close_figure()
 
 # Plot the loss history (weighted)
 plt.semilogy(losses[:epoch,4], '.', label='PDE')
@@ -353,10 +364,10 @@ plt.legend(loc='best', bbox_to_anchor=(0.5, 0.5, 0.5, 0.5))
 plt.grid()
 if save_fig:
     # save png
-    plt.savefig('../results/'+testcase+'_weighted_loss.png', dpi=300)
+    plt.savefig(resultfolder+'_weighted_loss.png', dpi=300)
     # save pdf
-    plt.savefig('../results/'+testcase+'_weighted_loss.pdf', dpi=300)
-plt.show()
+    plt.savefig(resultfolder+'_weighted_loss.pdf', dpi=300)
+close_figure()
 
 # Plot the solutions
 sol = model([t_data, x_data]).numpy().reshape(nt, nx)
@@ -373,10 +384,10 @@ plt.legend(loc='best', bbox_to_anchor=(0.5, 0.5, 0.5, 0.5))
 plt.grid()
 if save_fig:
     # save png
-    plt.savefig('../results/'+testcase+'_ux.png', dpi=300)
+    plt.savefig(resultfolder+'_ux.png', dpi=300)
     # save pdf
-    plt.savefig('../results/'+testcase+'_ux.pdf', dpi=300)
-plt.show()
+    plt.savefig(resultfolder+'_ux.pdf', dpi=300)
+close_figure()
 
 # Plot solutions in time
 for i in range(0, nx, 5):
@@ -389,10 +400,10 @@ plt.legend(loc='best', bbox_to_anchor=(0.5, 0.5, 0.5, 0.5))
 plt.grid()
 if save_fig:
     # save png
-    plt.savefig('../results/'+testcase+'_ut.png', dpi=300)
+    plt.savefig(resultfolder+'_ut.png', dpi=300)
     # save pdf
-    plt.savefig('../results/'+testcase+'_ut.pdf', dpi=300)
-plt.show()
+    plt.savefig(resultfolder+'_ut.pdf', dpi=300)
+close_figure()
 
 
 # Plot the parameters over time
@@ -410,10 +421,10 @@ plt.legend(loc='best', bbox_to_anchor=(0.5, 0.5, 0.5, 0.5))
 plt.grid()
 if save_fig:
     # save png
-    plt.savefig('../results/'+testcase+'_param.png', dpi=300)
+    plt.savefig(resultfolder+'_param.png', dpi=300)
     # save pdf
-    plt.savefig('../results/'+testcase+'_param.pdf', dpi=300)
-plt.show()
+    plt.savefig(resultfolder+'_param.pdf', dpi=300)
+close_figure()
 
 
 # Plot the parameter gradients over time
@@ -427,10 +438,10 @@ plt.legend(loc='best', bbox_to_anchor=(0.5, 0.5, 0.5, 0.5))
 plt.grid()
 if save_fig:
     # save png
-    plt.savefig('../results/'+testcase+'_param_grads.png', dpi=300)
+    plt.savefig(resultfolder+'_param_grads.png', dpi=300)
     # save pdf
-    plt.savefig('../results/'+testcase+'_param_grads.pdf', dpi=300)
-plt.show()
+    plt.savefig(resultfolder+'_param_grads.pdf', dpi=300)
+close_figure()
 
 
 
