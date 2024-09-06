@@ -41,7 +41,7 @@ data_perturbation = 0e-2 # perturbation for the data
 ## Parameters
 train_parameters = True # train the parameters or not
 nparam = 2 # number of parameters to train (d,u,beta0) 1=only d, 2=d and u, 3=d,u and beta0
-param_perturbation = 10 # perturbation for the parameters - factor for random perturbation of the parameters # 1 no perturbation, 10 means factor 10
+param_perturbation = 2 # perturbation for the parameters - factor for random perturbation of the parameters # 1 no perturbation, 10 means factor 10
 learning_rate_param = 1e-2 # learning rate of the parameters
 train_parameters_epoch = 2000 # epoch after which train the parameters
 
